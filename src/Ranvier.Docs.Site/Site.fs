@@ -22,6 +22,39 @@ let private pageUrl (route: string) (path: string) =
     let suffix = if page = "index" then "" elif page.EndsWith("/index") then page[..page.Length-6] else page
     "/" + String.concat "/" ([route.Trim('/'); suffix.Trim('/')] |> List.filter (String.IsNullOrEmpty >> not)) + "/"
 
+let private corePageStyles (baseUrl: string) (source: JsonElement) =
+    let sourceRoot = stringValue "root" source
+    let read relative = File.ReadAllText(Path.Combine(sourceRoot, relative))
+    let brand = read "docs/theme/brand.css"
+    let start = brand.IndexOf("/* ---- Buttons (global) ---- */", StringComparison.Ordinal)
+    if start < 0 then
+        invalidOp "The core brand stylesheet no longer exposes its component section."
+    let finish = brand.IndexOf("/* ---- Small screens ---- */", start, StringComparison.Ordinal)
+    if finish < 0 then
+        invalidOp "The core brand stylesheet no longer exposes its component section."
+    let assetBase = baseUrl.TrimEnd('/') + "/" + (stringValue "route" source).Trim('/') + "/"
+    let tokens =
+        (read "brand/tokens/ranvier-brand-tokens.css")
+            .Replace(":root,", ":root[data-theme=\"dark\"],")
+            .Replace("[data-ranvier-theme=", ":root[data-theme=")
+    String.concat "\n"
+        [ tokens
+          """:root {
+  --rv-code-bg: var(--nacara-bg-subtle);
+  --rv-code-title-bg: var(--nacara-bg-raised);
+  --rv-ease: cubic-bezier(.2, .8, .2, 1);
+  --rv-font-display: var(--nacara-font-sans);
+  --nacara-shadow-floating: var(--nacara-shadow);
+}
+"""
+          brand.Substring(start, finish - start).Replace("__BASE__", assetBase)
+          read "docs/theme/landing.css"
+          read "docs/theme/maps.css"
+          """.nacara-content .rv-demo__frames { margin: 0; padding: 0; }
+.nacara-content .rv-demo__frames > li { margin: 0; }
+.nacara-content .rv-demo__frames code { background: none; border: 0; padding: 0; }
+""" ]
+
 let private configure root (metadata: JsonElement) =
     let sources = arrayValue "sources" metadata
     let baseUrl = stringValue "baseUrl" metadata
@@ -57,7 +90,12 @@ let private configure root (metadata: JsonElement) =
                                 Menu.page (stringValue "id" source + ":" + stringValue "path" page) ] ]
                 options |> Theme.menu (stringValue "route" source) pages))
     let collection source =
-        let sourceTheme = theme |> Theme.editUrl ((stringValue "editUrl" source).TrimEnd('/'))
+        let sourceTheme =
+            theme
+            |> Theme.editUrl ((stringValue "editUrl" source).TrimEnd('/'))
+            |> fun options ->
+                if stringValue "id" source = "core" then options |> Theme.css (corePageStyles baseUrl source)
+                else options
         Collection.create (stringValue "id" source) DocFrontMatter.decoder
         |> Collection.sourceAll (stringValue "contentRoot" source)
         |> Collection.routePrefix (stringValue "route" source)

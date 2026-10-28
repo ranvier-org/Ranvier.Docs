@@ -8,8 +8,8 @@ export async function prepareLiveExampleAssets({ root, metadata }) {
   const packageRoot = path.join(root, 'node_modules/animejs');
   let manifest;
   try { manifest = JSON.parse(await readFile(path.join(packageRoot, 'package.json'), 'utf8')); }
-  catch (error) { if (error.code !== 'ENOENT') throw error; throw new Error('Live examples require animejs@4.5.0; run npm ci.', { cause: error }); }
-  if (manifest.version !== '4.5.0') throw new Error(`Live examples require animejs@4.5.0; found ${manifest.version}. Run npm ci.`);
+  catch (error) { if (error.code !== 'ENOENT') throw error; throw new Error('Live examples require animejs@4.5.0; run dotnet fsi build.fsx -- docs to restore internal dependencies.', { cause: error }); }
+  if (manifest.version !== '4.5.0') throw new Error(`Live examples require animejs@4.5.0; found ${manifest.version}. Run dotnet fsi build.fsx -- docs to restore internal dependencies.`);
   const modules = path.join(packageRoot, 'dist/modules');
   await access(path.join(modules, 'index.js'));
   const generated = path.join(root, '.generated');

@@ -24,9 +24,7 @@ Choose an id that remains meaningful if the repository's display name changes. I
 Fetch and build the new import:
 
 ```sh
-npm run sources:fetch
-npm run build
-npm run check:links
+dotnet fsi build.fsx -- docs
 ```
 
 Review the registry and lock changes together. Adding a new entry acquires that repository while retaining the accepted revisions of existing entries. Adding a repository is an explicit opt-in; the host does not execute arbitrary newly discovered organisation repositories automatically. Once registered, newly added pages are discovered automatically.
@@ -92,11 +90,11 @@ Use `manifest` in the registry if the configuration itself lives elsewhere, for 
 The default build reads acquired `.sources/<id>` checkouts. `local` is a convenience location, not an unconditional preference. `--local` selects configured local paths. `--source id=path` overrides one checkout explicitly and takes precedence over both.
 
 ```sh
-npm run prepare:docs -- --source forms=../Ranvier.Forms
-npm run preview -- --source forms=../Ranvier.Forms
+dotnet fsi build.fsx -- prepare --source forms=../Ranvier.Forms
+dotnet fsi build.fsx -- docs --watch --source forms=../Ranvier.Forms
 ```
 
-An author can test a repository that has not yet been published remotely by registering it and overriding its source root. Real local repositories record HEAD and whether the checkout is dirty. For temporary unversioned fixtures only, add `--allow-unversioned`; the metadata then records a null revision and a dirty source. Do not use that flag for release builds.
+An author can test a repository that has not yet been published remotely by registering it and overriding its source root. Real local repositories record HEAD and whether the checkout is dirty. The public authoring commands use real checkouts so previews retain meaningful provenance.
 
 ## Removing or renaming an import
 

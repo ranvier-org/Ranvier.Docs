@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { prepareBrowserBundles } from '../../scripts/browser-bundles.mjs';
+import { prepareBrowserBundles, planBrowserBundles, completeBrowserBundles } from '../../scripts/browser-bundles.mjs';
 
 async function fixture(t) {
   const root = await mkdtemp(path.join(tmpdir(), 'ranvier-browser-'));
@@ -68,4 +68,29 @@ test('a failed browser build leaves no successful cache marker and missing dist 
   } }), /compiler failed/);
   await assert.rejects(readFile(path.join(f.root, '.nacara/browser-bundles/Ranvier.Motion.json')), /ENOENT/);
   await assert.rejects(prepareBrowserBundles({ ...f.options, run: async command => command === 'git' ? 'src/Library.fs\0' : '' }), /did not produce dist\/index.html/);
+});
+
+test('browser planning only reads inputs and completion accepts a serialized plan', async t => {
+  const f = await fixture(t);
+  const plan = await planBrowserBundles(f.options);
+  assert.equal(plan.length, 1);
+  assert.equal(plan[0].cached, false);
+  assert.ok(plan[0].fingerprint);
+  assert.equal(f.calls.every(call => call.command === 'git'), true);
+  await assert.rejects(readFile(plan[0].marker), /ENOENT/);
+  await assert.rejects(completeBrowserBundles(plan, { run: f.options.run }), /did not produce dist\/index.html/);
+  await mkdir(plan[0].outputRoot, { recursive: true });
+  await writeFile(path.join(plan[0].outputRoot, 'index.html'), '<h1>Externally built</h1>');
+  await completeBrowserBundles(JSON.parse(JSON.stringify(plan)), { run: f.options.run });
+  assert.equal((await planBrowserBundles(f.options))[0].cached, true);
+});
+
+test('browser completion refuses to cache a build whose inputs changed after planning', async t => {
+  const f = await fixture(t);
+  const plan = await planBrowserBundles(f.options);
+  await mkdir(plan[0].outputRoot, { recursive: true });
+  await writeFile(path.join(plan[0].outputRoot, 'index.html'), '<h1>Externally built</h1>');
+  await writeFile(path.join(f.sources[0].local, 'src/Library.fs'), 'module Library\nlet value = 99');
+  await assert.rejects(completeBrowserBundles(plan, { run: f.options.run }), /inputs changed/);
+  await assert.rejects(readFile(plan[0].marker), /ENOENT/);
 });

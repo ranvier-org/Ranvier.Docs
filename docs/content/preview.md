@@ -7,7 +7,7 @@ title: Preview and verification
 ## Prepare without rendering
 
 ```sh
-npm run prepare:docs
+dotnet fsi build.fsx -- prepare
 ```
 
 This validates imports and creates `.generated/content/`, `.generated/static/` and `.generated/site.json`. It is useful for inspecting menus and transformed source links before a full build. It does not compile F# examples or prove that generated HTML works.
@@ -17,86 +17,57 @@ Use `--source id=path` to select one local checkout, `--local` to select configu
 ## Build once
 
 ```sh
-npm run build
-npm run check:links
+dotnet fsi build.fsx -- docs
 ```
 
-The build generates coordinated dependency properties and a combined example project, compiles the Release host and generates static output. Inspect `.generated/site.json` to confirm which checkouts and revisions were actually selected. A successful import does not prove successful compilation; a successful compilation does not prove links resolve. Run all relevant gates.
+Partas.Build restores the cached internal dependencies and pinned tools, acquires locked sources, generates coordinated dependency properties and a combined example project, compiles the Release host, bundles assets, generates static output and checks links. Inspect `.generated/site.json` to confirm the selected checkouts and revisions. Run `dotnet fsi build.fsx -- check` to check an existing output again.
 
 ## Local preview
 
 ```sh
-npm run preview -- --source view=../Ranvier.View
+dotnet fsi build.fsx -- docs --watch --source view=../Ranvier.View
 ```
 
-The command starts Nacara watch mode after preparing and compiling the host. Use the preview URL printed by Nacara, including the configured project-site prefix if present. Do not assume the preview is served at the origin root.
+The command builds the site and serves its output through the static preview server. Ordinary builds and preview do not run the full test suite. Use the printed preview URL, including the configured project-site prefix if present. Do not assume the preview is served at the origin root.
 
-Source changes are debounced. The coordinator watches imported content and relevant configuration/assets, prepares a new generation, rebuilds and restarts the preview host so navigation and collection changes are applied. A broken import prints an error; fix the source and let the next change retry. This is coordinated restart-based preview, not state-preserving browser hot-module replacement.
+Partas.Build watches imported content and relevant configuration/assets and debounces changes. It prepares imports, recompiles the host, renders output and checks links while the static server keeps running. Reload the browser after the refresh message. A broken import prints an error; fix the source and save to retry.
 
-Use Ctrl+C to stop the coordinator and its child host. It does not stop a shared SageFs daemon or unrelated processes. If a tool starts an additional browser or server for verification, stop only that task's process afterward.
+Use Ctrl+C to stop the watcher and preview server. It does not stop a shared SageFs daemon or unrelated processes. If a tool starts an additional browser or server for verification, stop only that task's process afterward.
 
 ## Test commands
 
-For the complete acceptance gate, after acquiring sources and installing Chromium:
+Run the complete acceptance gate explicitly:
 
 ```sh
-npm run verify
+dotnet fsi build.fsx -- verify
 ```
 
-This restores tools, runs the complete Node suite, builds the site and Release solution, runs both full F# suites, validates checker metadata and generated links/assets, and runs browser interactions. It propagates the same coordinated source/tracing environment to child compilers as the site build. A failed stage stops the command. `.artifacts/verification.json` records the completed stages and whether the full gate finished.
+This restores tools and internal dependencies, installs Chromium automatically, runs the complete Node suite, builds the site and Release solution, runs both full F# suites, validates checker metadata and generated links/assets, and runs browser interactions. Each acceptance stage runs once. It configures the source/tracing environment for child compilers automatically. A failed stage stops the command. Add `--report .artifacts/verification.json` to save a Partas.Build execution report.
 
-The individual commands below are useful for focused development; `verify` is the reproducible full gate.
-
-For direct .NET commands, propagate the same trace/source-bridge environment to child compilers. In a POSIX shell:
+For focused development, select a complete suite. The default is `node`, which exercises imports, source acquisition, output links and build-input generation:
 
 ```sh
-export RanvierTrace=true
-export CustomBeforeMicrosoftCommonTargets="$PWD/src/SourceDependencies.targets"
+dotnet fsi build.fsx -- test --suite node
+dotnet fsi build.fsx -- test --suite examples
+dotnet fsi build.fsx -- test --suite theme
+dotnet fsi build.fsx -- test --suite metadata
+dotnet fsi build.fsx -- test --suite browser
 ```
 
-In PowerShell:
-
-```powershell
-$env:RanvierTrace = 'true'
-$env:CustomBeforeMicrosoftCommonTargets = Join-Path (Get-Location) 'src/SourceDependencies.targets'
-```
-
-Run these from the central repository root. `npm run build`, `preview` and `verify` configure their own child environments automatically.
-
-The complete Node suite exercises importer behaviour, registry/source acquisition, output links and host build-input generation:
-
-```sh
-npm test
-```
-
-The shared F# example suite is an executable Expecto project. Run its complete suite, without filtering, when changing the scanner, workspace generator, map runtime or preset:
-
-```sh
-dotnet build Ranvier.Docs.slnx -c Release -p:RanvierTrace=true
-dotnet run --project tests/examples/Ranvier.Docs.Maps.Tests.fsproj -c Release --no-build
-dotnet fsi tests/examples/MetadataTests.fsx
-```
-
-A filter matching no tests is not acceptance evidence. The metadata checks use the restored host assets and verify browser-checker reference handling.
-
-The complete central theme regression suite covers SSR escaping, generated assets, stylesheet equivalence and a real Nacara build:
-
-```sh
-dotnet run --project tests/Nacara.Plugin.Ranvier.Tests/Nacara.Plugin.Ranvier.Tests.fsproj -c Release --no-build
-```
+The example suite covers the scanner, workspace generator, map runtime and preset. The metadata suite verifies browser-checker reference handling. The theme suite covers SSR escaping, generated assets, stylesheet equivalence and a real Nacara build. Partas.Build configures their prerequisites and child environments; no manual environment setup is needed. Focused suites are development checks; `verify` remains the full acceptance gate.
 
 When modifying the vendored central theme, sync the provenance record rather than silently allowing the central and originating implementations to drift.
 
 ## Browser verification
 
-Install the pinned browser test tooling and run the shared browser checks after building:
+Build the site, then run the shared browser suite:
 
 ```sh
-npx playwright install chromium
-npm run test:browser
+dotnet fsi build.fsx -- docs
+dotnet fsi build.fsx -- test --suite browser
 ```
 
-The tests start the built-output server automatically. To inspect an already built site manually, run `npm run serve` and open its printed URL. This static server does not rebuild source files; use `preview` for editing.
+Partas.Build installs Chromium automatically and builds missing output. Run `docs` first after editing source so the browser checks exercise the latest rendering. The tests start the built-output server. To inspect an already built site manually, run `dotnet fsi build.fsx -- serve` and open its printed URL. This static server does not rebuild source files; use `docs --watch` for editing.
 
 Inspect at least these behaviours after a shared rendering change:
 

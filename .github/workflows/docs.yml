@@ -16,9 +16,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      RanvierTrace: 'true'
-      CustomBeforeMicrosoftCommonTargets: ${{ github.workspace }}/src/SourceDependencies.targets
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,18 +25,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
-      - run: npm ci
-      - run: dotnet tool restore
-      - run: npm test
-      - run: npm run sources:fetch
-      - run: npm run build
-      - run: dotnet build Ranvier.Docs.slnx -c Release
-      - run: dotnet run --project tests/examples/Ranvier.Docs.Maps.Tests.fsproj -c Release --no-build
-      - run: dotnet run --project tests/Nacara.Plugin.Ranvier.Tests/Nacara.Plugin.Ranvier.Tests.fsproj -c Release --no-build
-      - run: dotnet fsi tests/examples/MetadataTests.fsx
-      - run: npm run check:links
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:browser
+      - run: dotnet fsi build.fsx -- verify --report .artifacts/verification.json
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -47,12 +33,14 @@ jobs:
           path: |
             playwright-report
             test-results
+            .artifacts/verification.json
       - uses: actions/upload-artifact@v4
         with:
           name: docs-site-and-provenance
           path: |
             output
             .generated/site.json
+            .artifacts/verification.json
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name == 'workflow_dispatch' && inputs.deploy
         with:

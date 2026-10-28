@@ -109,7 +109,7 @@ export async function loadSourceConfiguration(root, registration, options = {}) 
   const local = registration.local && path.resolve(root, registration.local);
   const checkout = override ? path.resolve(root, override) :
     registration.self ? root : options.preferLocal && local ? local : path.join(root, '.sources', registration.id);
-  if (!(await exists(checkout))) throw new Error(`${registration.id}: checkout missing at ${checkout}; run npm run sources:fetch or use --local`);
+  if (!(await exists(checkout))) throw new Error(`${registration.id}: checkout missing at ${checkout}; run dotnet fsi build.fsx -- sources or use --local`);
   const manifestPath = await within(checkout, registration.manifest ?? 'docs/ranvier-docs.json', `${registration.id}.manifest`, true);
   const sourceManifest = manifestPath ? JSON.parse(await readFile(manifestPath, 'utf8')) : {};
   if (!sourceManifest || typeof sourceManifest !== 'object' || Array.isArray(sourceManifest)) throw new Error(`${registration.id}: manifest must be an object`);

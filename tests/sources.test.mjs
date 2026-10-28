@@ -43,4 +43,28 @@ test('source acquisition locks revisions and refuses to overwrite dirty acquired
   await writeFile(path.join(root, '.sources/core/page.md'), '# Local change');
   await assert.rejects(implementation.acquireSources(options), /dirty|uncommitted/);
   assert.equal(await readFile(path.join(root, '.sources/core/page.md'), 'utf8'), '# Local change');
+  await implementation.acquireSources({ ...options, sourceRoots: { core: path.join(root, 'local checkout') } });
+  assert.equal(await readFile(path.join(root, '.sources/core/page.md'), 'utf8'), '# Local change');
+  await rm(path.join(root, '.sources/view'), { recursive: true });
+  await implementation.acquireSources({ ...options, sourceRoots: { core: path.join(root, 'local checkout') } });
+  assert.ok((await git(path.join(root, '.sources/view'), ['rev-parse', 'HEAD'])).stdout.trim());
+  await rm(path.join(root, '.sources/view'), { recursive: true });
+  await mkdir(path.join(root, '.sources/view'));
+  await git(path.join(root, '.sources/view'), ['init']);
+  await git(path.join(root, '.sources/view'), ['remote', 'add', 'origin', upstream]);
+  await implementation.acquireSources({ ...options, sourceRoots: { core: path.join(root, 'local checkout') } });
+  const beforeOffline = await readFile(path.join(root, 'sources.lock.json'), 'utf8');
+  await rm(upstream, { recursive: true });
+  await implementation.acquireSources({ ...options, sourceRoots: { core: path.join(root, 'local checkout') } });
+  assert.equal(await readFile(path.join(root, 'sources.lock.json'), 'utf8'), beforeOffline);
+});
+
+test('an unpublished local documentation source needs no remote checkout', async t => {
+  const root = await mkdtemp(path.join(tmpdir(), 'ranvier-local-source-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeFile(path.join(root, 'sources.json'), JSON.stringify({ version: 1,
+    sources: [{ id: 'forms', repository: 'unpublished-org/never-created', local: '../Local Forms', ref: 'main' }] }));
+  await implementation.acquireSources({ root, sourceRoots: { forms: '../Local Forms' } });
+  await assert.rejects(readFile(path.join(root, '.sources/forms/.git/HEAD')), /ENOENT/);
+  await implementation.acquireSources({ root, preferLocal: true });
 });
