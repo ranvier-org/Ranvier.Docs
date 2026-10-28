@@ -61,7 +61,7 @@ async function fingerprint(root, roots, bundle, run, env) {
   return hash.digest('hex');
 }
 
-export async function prepareBrowserBundles(options = {}) {
+export async function planBrowserBundles(options = {}) {
   const root = path.resolve(options.root ?? workspace);
   const registry = await loadRegistry(root, options.registryFile);
   const view = registry.sources.find(source => source.id === 'view');
@@ -79,7 +79,6 @@ export async function prepareBrowserBundles(options = {}) {
   const env = browserBuildEnvironment(root, roots, options.env);
   const run = options.run ?? execute;
   const cache = path.join(root, '.nacara/browser-bundles');
-  await mkdir(cache, { recursive: true });
   const outputs = [];
   for (const bundle of bundles) {
     const projectRoot = path.resolve(roots.view, path.posix.dirname(bundle.path));
@@ -91,15 +90,34 @@ export async function prepareBrowserBundles(options = {}) {
       try { cached = JSON.parse(await readFile(marker, 'utf8')).fingerprint === wanted; }
       catch (error) { if (!(error instanceof SyntaxError)) throw error; }
     }
-    if (!cached) {
-      options.log?.(`Building View browser example ${path.basename(projectRoot)}...`);
-      await run('npm', ['ci', '--no-audit', '--no-fund'], { cwd: projectRoot, env });
-      await run('npm', ['run', 'build'], { cwd: projectRoot, env });
-      if (!(await exists(path.join(outputRoot, 'index.html')))) throw new Error(`${bundle.path}: browser build did not produce dist/index.html`);
-      const current = await fingerprint(root, roots, bundle, run, env);
-      if (current === wanted) await writeFile(marker, JSON.stringify({ fingerprint: wanted, sourceRoot: roots.view }) + '\n');
-    }
-    outputs.push({ sourceId: 'view', ...bundle, projectRoot, outputRoot, cached });
+    outputs.push({ sourceId: 'view', ...bundle, projectRoot, outputRoot, cached,
+      fingerprint: wanted, marker, env, root, roots, bundle });
   }
   return outputs;
+}
+
+export async function completeBrowserBundles(plan, options = {}) {
+  const run = options.run ?? execute;
+  for (const entry of plan) {
+    if (!(await exists(path.join(entry.outputRoot, 'index.html')))) throw new Error(`${entry.path}: browser build did not produce dist/index.html`);
+    const current = await fingerprint(entry.root, entry.roots, entry.bundle, run, entry.env);
+    if (current !== entry.fingerprint) throw new Error(`${entry.path}: browser build inputs changed after planning; prepare the build again.`);
+    if (!entry.cached) {
+      await mkdir(path.dirname(entry.marker), { recursive: true });
+      await writeFile(entry.marker, JSON.stringify({ fingerprint: entry.fingerprint, sourceRoot: entry.roots.view }) + '\n');
+    }
+  }
+  return plan;
+}
+
+export async function prepareBrowserBundles(options = {}) {
+  const plan = await planBrowserBundles(options);
+  const run = options.run ?? execute;
+  for (const entry of plan) if (!entry.cached) {
+    options.log?.(`Building View browser example ${path.basename(entry.projectRoot)}...`);
+    await run('npm', ['ci', '--no-audit', '--no-fund'], { cwd: entry.projectRoot, env: entry.env });
+    await run('npm', ['run', 'build'], { cwd: entry.projectRoot, env: entry.env });
+  }
+  await completeBrowserBundles(plan, { run });
+  return plan.map(({ sourceId, path, route, projectRoot, outputRoot, cached }) => ({ sourceId, path, route, projectRoot, outputRoot, cached }));
 }

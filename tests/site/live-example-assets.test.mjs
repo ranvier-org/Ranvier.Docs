@@ -30,7 +30,7 @@ test('live examples use a pinned local runtime and retain relative module import
 test('live runtime preparation rejects missing or mismatched dependencies and malformed deployment bases', async t => {
   const root = await mkdtemp(path.join(tmpdir(), 'ranvier-live-missing-'));
   t.after(() => rm(root, { recursive: true, force: true }));
-  await assert.rejects(prepareLiveExampleAssets({ root, metadata: {} }), /animejs@4\.5\.0.*npm ci/);
+  await assert.rejects(prepareLiveExampleAssets({ root, metadata: {} }), /animejs@4\.5\.0.*dotnet fsi build\.fsx -- docs/);
   await mkdir(path.join(root, 'node_modules/animejs'), { recursive: true });
   await writeFile(path.join(root, 'node_modules/animejs/package.json'), '{"version":"5.0.0"}');
   await assert.rejects(prepareLiveExampleAssets({ root, metadata: {} }), /found 5\.0\.0/);

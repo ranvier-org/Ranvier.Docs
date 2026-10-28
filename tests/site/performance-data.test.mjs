@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { preparePerformanceData } from '../../scripts/performance-data.mjs';
+import { preparePerformanceData, planPerformanceData, completePerformanceData } from '../../scripts/performance-data.mjs';
 
 async function fixture(t) {
   const root = await mkdtemp(path.join(tmpdir(), 'ranvier-performance-'));
@@ -75,4 +75,29 @@ test('registries without the performance dataset skip generation', async t => {
   const f = await fixture(t);
   await writeFile(path.join(f.root, 'sources.json'), JSON.stringify({ version: 1, sources: [{ id: 'docs', repository: 'fixture/docs' }] }));
   assert.equal(await preparePerformanceData({ root: f.root, run: async () => assert.fail('must not run') }), null);
+});
+
+test('performance planning does not execute the generator and completion accepts a serialized plan', async t => {
+  const f = await fixture(t);
+  const plan = await planPerformanceData(f.options);
+  assert.equal(plan.cached, false);
+  assert.ok(plan.fingerprint);
+  assert.equal(plan.outputDirectory, path.dirname(f.outputFile));
+  assert.equal(f.calls.length, 0);
+  await assert.rejects(readFile(plan.marker), /ENOENT/);
+  await assert.rejects(completePerformanceData(plan), /index\.json/);
+  await f.run();
+  const completed = await completePerformanceData(JSON.parse(JSON.stringify(plan)));
+  assert.equal(completed.commits, 1);
+  assert.equal((await planPerformanceData(f.options)).cached, true);
+  assert.equal(await completePerformanceData(null), null);
+});
+
+test('performance completion refuses to cache a build whose dataset changed after planning', async t => {
+  const f = await fixture(t);
+  const plan = await planPerformanceData(f.options);
+  await f.run();
+  await writeFile(path.join(f.datasetRoot, 'runs/fixture.json'), '{"changed":true}');
+  await assert.rejects(completePerformanceData(plan), /inputs changed/);
+  await assert.rejects(readFile(plan.marker), /ENOENT/);
 });

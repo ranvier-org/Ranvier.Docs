@@ -6,11 +6,11 @@ title: Troubleshooting
 
 ## Checkout missing
 
-Run `npm run sources:fetch` for acquired inputs. If using `--local`, confirm every selected local path exists. Use a single `--source id=path` override when only one library should come from a developer checkout. The importer intentionally does not fall back silently to a different source revision.
+Run `dotnet fsi build.fsx -- sources` for acquired inputs. If using `--local`, confirm every selected local path exists. Use a single `--source id=path` override when only one library should come from a developer checkout. The importer intentionally does not fall back silently to a different source revision.
 
 ## Registry differs from lock
 
-A repository/ref changed while its accepted lock entry did not. Review the intended change, then run `npm run sources:fetch -- --refresh` and validate the new coordinated set. Do not delete the lock just to suppress the diagnostic.
+A repository/ref changed while its accepted lock entry did not. Review the intended change, then run `dotnet fsi build.fsx -- sources --refresh all` (or name the affected ids) and validate the new coordinated set. Do not delete the lock just to suppress the diagnostic.
 
 ## Dirty acquired checkout
 
@@ -38,7 +38,7 @@ Read the source/page and line in the diagnostic. Confirm the destination source 
 
 ## Ordinary link works locally but breaks after publishing
 
-Look for a leading slash that escapes the configured `baseUrl`, a hard-coded old repository-site URL, a title-derived route that changed, or a relative asset base that depends on the current page's output directory. Run `npm run check:links` against the actual generated output. Opening one page by filename is not a complete hosted-route test.
+Look for a leading slash that escapes the configured `baseUrl`, a hard-coded old repository-site URL, a title-derived route that changed, or a relative asset base that depends on the current page's output directory. Run `dotnet fsi build.fsx -- check` against the actual generated output. Opening one page by filename is not a complete hosted-route test.
 
 ## Example module is missing
 
@@ -46,7 +46,7 @@ Check `examplesProject` in the source manifest and `.generated/Examples.fsproj`.
 
 ## Fable or npm resolution fails
 
-Separate .NET references from browser runtime packages. NuGet dependencies belong to sample projects; npm runtime dependencies belong to `packages`. Check that package versions agree across sources. Restore the pinned Fickl tool manifest. Verify the selected View/CSS/core revisions and the Xantham checker metadata versions.
+Separate .NET references from browser runtime packages. NuGet dependencies belong to sample projects; npm runtime dependencies belong to `packages`. Check that package versions agree across sources. Run `dotnet fsi build.fsx -- docs` to restore the internal dependencies and pinned tools automatically. Verify the selected View/CSS/core revisions and the Xantham checker metadata versions.
 
 ## An example renders but does not interact
 

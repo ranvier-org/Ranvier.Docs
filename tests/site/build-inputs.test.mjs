@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { mkdtemp, mkdir, readFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { writeBuildInputs, watchFolders } from '../../scripts/build.mjs';
+import { writeBuildInputs, watchFolders } from '../../scripts/build-inputs.mjs';
 
 test('build inputs preserve portable dependency roots and project extensions without treating npm packages as NuGet', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'ranvier-build-inputs-'));

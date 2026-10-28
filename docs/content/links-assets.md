@@ -92,7 +92,7 @@ The example's assets must use a compatible relative/public base. Build the direc
 
 The existing View Playground, Motion and Hydration demos have a maintained central build adapter. Their default bundle declarations live in the View registration's `defaults`. Before import, the adapter restores/builds those three source applications with coordinated core/View/CSS roots and relative Vite assets. It caches successful builds using the selected paths, Node version, tool/configuration files and relevant source inputs. Changes invalidate that cache. The Motion output includes its additional scenario pages.
 
-This is explicit compatibility for known applications, not automatic execution of arbitrary build commands from a manifest. For another standalone app, build its output before `npm run build`, or add and test a deliberate central adapter. Normal small component/map/live fences use the shared pipeline and need no standalone app build.
+This is explicit compatibility for known applications, not automatic execution of arbitrary build commands from a manifest. For another standalone app, build its output before `dotnet fsi build.fsx -- docs`, or add and test a deliberate central adapter. Normal small component/map/live fences use the shared pipeline and need no standalone app build.
 
 ## Broken links
 

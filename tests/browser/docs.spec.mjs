@@ -1,5 +1,64 @@
 import { test, expect } from '@playwright/test';
 
+test('the core homepage retains its original hero, state presentation and responsive layout', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('core/');
+  await expect(page.locator('.nacara-layout--splash')).toBeVisible();
+  const hero = page.locator('.rv-hero');
+  await expect(hero).toHaveCSS('display', 'grid');
+  const copy = await page.locator('.rv-hero__copy').boundingBox();
+  const demo = await page.locator('.rv-demo').boundingBox();
+  expect(demo.x).toBeGreaterThan(copy.x + copy.width);
+  await expect(page.locator('.rv-hero__title')).toHaveCSS('font-size', '80px');
+  await expect(page.locator('.rv-btn--primary').first()).toHaveCSS('align-items', 'center');
+  await expect(page.locator('.rv-demo__frames > li.is-active')).toHaveCSS('opacity', '1');
+  await expect(page.locator('#rv-demo-fsharp')).toHaveCSS('visibility', 'hidden');
+  await expect(page.locator('.rv-dial')).toHaveCSS('display', 'grid');
+  await expect(page.locator('.rv-cards')).toHaveCSS('display', 'grid');
+  const stateIcon = await page.locator('.rv-state--fallback').first().evaluate(element =>
+    getComputedStyle(element, '::before').backgroundImage);
+  expect(stateIcon).toContain('/Ranvier.Docs/core/brand/states/fallback-light.svg');
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileCopy = await page.locator('.rv-hero__copy').boundingBox();
+  const mobileDemo = await page.locator('.rv-demo').boundingBox();
+  expect(mobileDemo.y).toBeGreaterThan(mobileCopy.y + mobileCopy.height);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.goto('docs/');
+  expect(await page.locator('style').allTextContents()).not.toEqual(expect.arrayContaining([expect.stringContaining('.rv-hero {')]));
+  expect(errors).toEqual([]);
+});
+
+test('the core homepage demo cycles, pauses and supports language tabs with the keyboard', async ({ page }) => {
+  await page.clock.install();
+  await page.goto('core/');
+  const demo = page.locator('[data-rv-demo]');
+  const activeFrame = demo.locator('.rv-demo__frames > li.is-active');
+  const csharp = demo.getByRole('tab', { name: 'C#', exact: true });
+  const fsharp = demo.getByRole('tab', { name: 'F#', exact: true });
+  await expect(activeFrame).toHaveAttribute('data-step', '0');
+  await page.clock.fastForward(2400);
+  await expect(activeFrame).toHaveAttribute('data-step', '1');
+  await expect(activeFrame).toContainText('Total 12');
+  await page.clock.runFor(7200);
+  await expect(activeFrame).toHaveAttribute('data-step', '0');
+  await expect(fsharp).toHaveAttribute('aria-selected', 'true');
+  await expect(demo.locator('#rv-demo-fsharp')).not.toHaveAttribute('hidden');
+  await csharp.click();
+  await expect(csharp).toHaveAttribute('aria-selected', 'true');
+  await csharp.press('ArrowRight');
+  await expect(fsharp).toBeFocused();
+  await expect(fsharp).toHaveAttribute('aria-selected', 'true');
+  await expect(demo.locator('#rv-demo-csharp')).toHaveAttribute('hidden');
+  const heldStep = await activeFrame.getAttribute('data-step');
+  await page.clock.runFor(4800);
+  await expect(activeFrame).toHaveAttribute('data-step', heldStep);
+  await demo.locator('#rv-demo-fsharp [data-step="2"]').hover();
+  await expect(activeFrame).toHaveAttribute('data-step', '2');
+  await expect(activeFrame).toContainText('Unavailable: feed offline');
+});
+
 test('the Ranvier theme and initial examples are readable without JavaScript', async ({ browser, baseURL }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();

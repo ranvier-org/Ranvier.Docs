@@ -92,7 +92,7 @@ Use forward slashes on every platform. Repository-relative paths must be nonempt
 
 ## Lock and generated metadata
 
-`sources.lock.json` has `version` and a `sources` object keyed by id. Each entry records `repository`, configured `ref` and exact `revision`. Maintain it with `sources:fetch`; avoid hand-editing commit hashes.
+`sources.lock.json` has `version` and a `sources` object keyed by id. Each entry records `repository`, configured `ref` and exact `revision`. Maintain it with `dotnet fsi build.fsx -- sources`; avoid hand-editing commit hashes. Use `--refresh core,view,css` for selected source ids or `--refresh all` for every source.
 
 `.generated/site.json` is generated integration metadata, not source configuration. It contains `title`, `baseUrl`, `origin`, generation time and source entries with resolved root, revision, dirty status, staged content root, original content path, source edit URL, menu sections, landing page, example project and npm packages. It intentionally contains local absolute paths for the local build; publish the site output, not this metadata as executable configuration on another machine.
 

@@ -6,19 +6,17 @@ title: CI and publishing
 
 ## Build contract
 
-The central workflow checks out this host, installs pinned Node/.NET tooling, restores npm and .NET tools, runs the Node tests, acquires locked source revisions, builds the site and checks generated links. It uploads `output/` and provenance metadata as a reviewable build artifact.
+The central workflow checks out this host, installs the selected Node/.NET tooling and invokes the Partas.Build workflow. Partas.Build restores internal dependencies and pinned tools, acquires locked sources and runs the requested build or verification stages. It produces `output/` and provenance metadata as reviewable build artifacts. Authors use the same .NET entry point locally.
 
 Library repositories are inputs. Their existing docs workflows remain untouched until migration. A central build does not change library packages or publish a new library version.
 
 ## Reproducible source selection
 
-`sources.json` expresses intended refs. `sources.lock.json` expresses the exact accepted revisions. A normal `sources:fetch` uses the lock. To update coordinated inputs:
+`sources.json` expresses intended refs. `sources.lock.json` expresses the exact accepted revisions. A normal `sources` command or `docs` build uses the lock. To update and validate coordinated inputs:
 
 ```sh
-npm run sources:fetch -- --refresh
-npm test
-npm run build
-npm run check:links
+dotnet fsi build.fsx -- sources --refresh all
+dotnet fsi build.fsx -- verify
 ```
 
 Review and commit the lock changes with any needed documentation/build changes. If a registration's repository or ref changes while its lock entry remains unchanged, acquisition fails and tells you to refresh. The lock is not silently discarded.
@@ -26,16 +24,16 @@ Review and commit the lock changes with any needed documentation/build changes. 
 To update only selected libraries and keep all other accepted revisions unchanged, name source ids after the refresh flag:
 
 ```sh
-npm run sources:fetch -- --refresh view
-npm run sources:fetch -- --refresh core,view,css
+dotnet fsi build.fsx -- sources --refresh view
+dotnet fsi build.fsx -- sources --refresh core,view,css
 ```
 
-Use an unqualified `--refresh` when intentionally updating every acquired source. Unknown ids are errors. Adding a new registration needs a normal fetch; existing locked inputs are retained.
+Use `--refresh all` when intentionally updating every acquired source. The flag requires a value. Unknown ids are errors. Adding a new registration needs a normal fetch; existing locked inputs are retained.
 
 The `core-performance` dataset pins the core repository's `perf-data` branch. A maintained build adapter runs the core's own performance-index generator against that snapshot, producing the ignored `docs/static/perf-data/` files used by its charts. This uses real recorded measurements and records the dataset revision. Refresh just that dataset when accepting newer history without updating library code:
 
 ```sh
-npm run sources:fetch -- --refresh core-performance
+dotnet fsi build.fsx -- sources --refresh core-performance
 ```
 
 Generated history is copied as static output by the ordinary importer. Do not edit the generated chart JSON as a data correction; correct the measurement source/generator or accept a different reviewed dataset snapshot.
@@ -57,6 +55,14 @@ For later organisation integration, add a dependency-update process that refresh
 ## Build versus deployment
 
 The workflow's manual `deploy` input defaults to false. Ordinary pushes and pull requests produce artifacts. A manual workflow dispatch with `deploy=true` builds and validates first, then uploads a Pages artifact and runs the deployment job.
+
+Trigger that GitHub deployment through Partas.Build:
+
+```sh
+dotnet fsi build.fsx -- publish
+```
+
+This requests the repository's GitHub deployment workflow. A local `docs` build does not publish the site.
 
 Before enabling publication, configure the repository's GitHub Pages source as GitHub Actions and its `github-pages` environment. Set `baseUrl` for the actual destination. A project site normally needs `/<repository-name>/`; a custom-domain root may use `/`. `origin` is the scheme/hostname without the path prefix.
 

@@ -19,7 +19,7 @@ async function required(file, directory = false) {
     const info = await stat(file);
     if (directory ? !info.isDirectory() : !info.isFile()) throw new Error(`Expected ${directory ? 'directory' : 'file'}: ${file}`);
   } catch (error) {
-    if (error.code === 'ENOENT') throw new Error(`Performance data input missing: ${file}; run npm run sources:fetch first.`, { cause: error });
+    if (error.code === 'ENOENT') throw new Error(`Performance data input missing: ${file}; run dotnet fsi build.fsx -- sources first.`, { cause: error });
     throw error;
   }
 }
@@ -38,7 +38,17 @@ async function readOutputs(outputDirectory, groups) {
   return { commits, hashes };
 }
 
-export async function preparePerformanceData(options = {}) {
+async function inputFingerprint({ coreRoot, datasetRoot, generator, groupFile, runsDirectory }) {
+  const files = (await readdir(runsDirectory)).filter(file => file.endsWith('.json')).sort();
+  if (!files.length) throw new Error(`No performance records found in ${runsDirectory}`);
+  const hash = createHash('sha256').update(JSON.stringify({ version: 1, coreRoot, datasetRoot }));
+  hash.update(await readFile(groupFile));
+  hash.update(await readFile(generator));
+  for (const file of files) hash.update(file).update(await readFile(path.join(runsDirectory, file)));
+  return hash.digest('hex');
+}
+
+export async function planPerformanceData(options = {}) {
   const root = path.resolve(options.root ?? workspace);
   const registry = await loadRegistry(root, options.registryFile);
   const dataset = registry.sources.find(source => source.id === 'core-performance' && source.kind === 'dataset');
@@ -57,17 +67,13 @@ export async function preparePerformanceData(options = {}) {
   if (!groups.length || groups.some(name => !/^[a-z0-9-]+$/.test(name) || name === 'index')) {
     throw new Error(`Performance groups must contain nonempty, safe group names: ${groupFile}`);
   }
-  const files = (await readdir(runsDirectory)).filter(file => file.endsWith('.json')).sort();
-  if (!files.length) throw new Error(`No performance records found in ${runsDirectory}`);
-  const hash = createHash('sha256').update(JSON.stringify({ version: 1, coreRoot, datasetRoot })).update(groupsText);
-  hash.update(await readFile(generator));
-  for (const file of files) hash.update(file).update(await readFile(path.join(runsDirectory, file)));
-  const fingerprint = hash.digest('hex');
+  const fingerprint = await inputFingerprint({ coreRoot, datasetRoot, generator, groupFile, runsDirectory });
   const outputDirectory = path.join(coreRoot, 'docs/static/perf-data');
   const outputFile = path.join(outputDirectory, 'index.json');
   const marker = path.join(root, '.nacara/performance-data/core-performance.json');
-  const metadata = { sourceId: core.id, datasetId: dataset.id, coreRoot, datasetRoot, generator,
-    runsDirectory, outputFile, groups, watchRoots: [runsDirectory, path.dirname(generator)] };
+  const metadata = { sourceId: core.id, datasetId: dataset.id, coreRoot, datasetRoot, generator, groupFile,
+    runsDirectory, outputDirectory, outputFile, groups, watchRoots: [runsDirectory, path.dirname(generator)],
+    fingerprint, marker, env: options.env ?? process.env, commits: 0 };
   try {
     const cached = JSON.parse(await readFile(marker, 'utf8'));
     if (cached.fingerprint === fingerprint) {
@@ -77,14 +83,28 @@ export async function preparePerformanceData(options = {}) {
   } catch (error) {
     if (error.code !== 'ENOENT' && !(error instanceof SyntaxError) && !error.message.startsWith('Performance data has no commits:')) throw error;
   }
-  options.log?.(`Preparing performance charts from ${dataset.id}...`);
+  return { ...metadata, cached: false };
+}
+
+export async function completePerformanceData(plan) {
+  if (!plan) return null;
+  const output = await readOutputs(plan.outputDirectory, plan.groups);
+  if (await inputFingerprint(plan) !== plan.fingerprint) throw new Error('Performance data inputs changed after planning; prepare the build again.');
+  if (!plan.cached) {
+    await mkdir(path.dirname(plan.marker), { recursive: true });
+    await writeFile(plan.marker, JSON.stringify({ fingerprint: plan.fingerprint, hashes: output.hashes }) + '\n');
+  }
+  return { ...plan, commits: output.commits };
+}
+
+export async function preparePerformanceData(options = {}) {
+  const plan = await planPerformanceData(options);
+  if (!plan || plan.cached) return plan;
+  options.log?.(`Preparing performance charts from ${plan.datasetId}...`);
   try {
-    await (options.run ?? execute)(process.execPath, [generator, runsDirectory, outputFile], { cwd: coreRoot, env: options.env ?? process.env });
+    await (options.run ?? execute)(process.execPath, [plan.generator, plan.runsDirectory, plan.outputFile], { cwd: plan.coreRoot, env: plan.env });
   } catch (error) {
     throw new Error(`Performance data generator failed: ${error.message}`, { cause: error });
   }
-  const output = await readOutputs(outputDirectory, groups);
-  await mkdir(path.dirname(marker), { recursive: true });
-  await writeFile(marker, JSON.stringify({ fingerprint, hashes: output.hashes }) + '\n');
-  return { ...metadata, commits: output.commits, cached: false };
+  return completePerformanceData(plan);
 }
