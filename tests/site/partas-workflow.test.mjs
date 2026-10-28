@@ -8,8 +8,8 @@ const exec = promisify(execFile);
 const workspace = new URL('../..', import.meta.url);
 const root = await import('node:url').then(({ fileURLToPath }) => fileURLToPath(workspace));
 const explain = async args => {
-  const { stdout } = await exec('dotnet', ['fsi', 'build.fsx', '--', ...args, '--explain'], {
-    cwd: root, windowsHide: true, maxBuffer: 2 * 1024 * 1024
+  const { stdout } = await exec('dotnet', ['fsi', 'build.fsx', '--', ...args, '--explain', '--json'], {
+    cwd: root, windowsHide: true, maxBuffer: 2 * 1024 * 1024, env: { ...process.env, CI: 'true' }
   });
   return JSON.parse(stdout.trim());
 };
