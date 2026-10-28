@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="src/Ranvier.Docs.Site/Ranvier.Docs.Site.fsproj" />
+  <Project Path="src/Ranvier.Docs.Examples/Ranvier.Docs.Examples.fsproj" />
+  <Project Path="src/Nacara.Plugin.Ranvier/Nacara.Plugin.Ranvier.fsproj" />
+  <Project Path="src/Nacara.Plugin.Ranvier.Theme/Nacara.Plugin.Ranvier.Theme.fsproj" />
+  <Project Path="tests/examples/Ranvier.Docs.Maps.Tests.fsproj" />
+  <Project Path="tests/Nacara.Plugin.Ranvier.Tests/Nacara.Plugin.Ranvier.Tests.fsproj" />
+</Solution>

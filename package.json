@@ -1,0 +1,29 @@
+{
+  "name": "ranvier-docs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs tests/site/*.test.mjs",
+    "sources:fetch": "node scripts/sources.mjs",
+    "prepare:docs": "node scripts/import.mjs",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/build.mjs --watch",
+    "check:links": "node scripts/check-output.mjs",
+    "serve": "node scripts/serve.mjs",
+    "test:browser": "playwright test",
+    "verify": "node scripts/verify.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "pagefind": "1.5.2"
+  },
+  "dependencies": {
+    "animejs": "4.5.0",
+    "mdast-util-from-markdown": "2.1.0",
+    "parse5": "8.0.1"
+  }
+}

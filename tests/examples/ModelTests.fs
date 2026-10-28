@@ -1,0 +1,711 @@
+module Ranvier.Docs.Maps.Tests.ModelTests
+
+open Expecto
+
+#if RANVIER_TRACE
+open Ranvier
+open Ranvier.Docs.Maps
+
+type private Line =
+    {
+        Sku: string
+        Price: decimal
+        Qty: int
+    }
+
+/// The docs' cart: a quoted shipping cost between the subtotal and the total.
+type private Cart =
+    {
+        Graph: Graph
+        Desk: Desk<decimal>
+        Lines: Signal<Line list>
+        Subtotal: int
+        Shipping: int
+        Total: int
+    }
+
+let private cart () =
+    let g = new Graph ()
+    use _ = g.Activate ()
+    let desk = Desk<decimal>()
+    let lines = createSignal [ { Sku = "tea"; Price = 4m; Qty = 1 } ]
+    Trace.label (g, lines, "lines")
+
+    let subtotal =
+        createMemo (fun _ ->
+            lines.Value
+            |> List.sumBy (fun l -> l.Price * decimal l.Qty))
+
+    Trace.label (g, subtotal, "subtotal")
+    let shipping = createAsync (fun _ _ -> desk.Quote subtotal.Value)
+    Trace.label (g, shipping, "shipping")
+    let total = createMemo (fun _ -> subtotal.Value + shipping.Value)
+    Trace.label (g, total, "total")
+    createEffect (fun () -> total.TryValue |> ignore)
+
+    {
+        Graph = g
+        Desk = desk
+        Lines = lines
+        Subtotal = (subtotal :> INode).Id
+        Shipping = (shipping :> INode).Id
+        Total = (total :> INode).Id
+    }
+
+/// The frames of the events recorded by <c>act</c>, played on from the scene before it.
+let private framesOf (c: Cart) (act: unit -> unit) =
+    let before = Trace.events c.Graph
+
+    let scene =
+        (MapModel.frames MapModel.start before
+         |> Array.last)
+            .After
+
+    act ()
+    MapModel.frames scene (Trace.eventsSince c.Graph before[before.Length - 1].Seq)
+
+/// The landing page's example: an async price, a memo over it, and a boundary over the memo.
+type private Quote =
+    {
+        Graph: Graph
+        Price: AsyncSource<decimal>
+        Total: int
+        View: int
+    }
+
+let private quote () =
+    let g = new Graph ()
+    use _ = g.Activate ()
+    let price = createAsyncSource<decimal>()
+    let total = createMemo (fun _ -> price.Value * 3m)
+    Trace.label (g, total, "total")
+
+    let view =
+        createBoundary (fun _ -> "Loading") (fun ex _ -> "Unavailable: " + ex.Message) (fun () -> sprintf "Total %M" total.Value)
+
+    createEffect (fun () -> view.Value |> ignore)
+
+    {
+        Graph = g
+        Price = price
+        Total = (total :> INode).Id
+        View = (view :> INode).Id
+    }
+
+let private sceneOf (g: Graph) =
+    (MapModel.frames MapModel.start (Trace.events g)
+     |> Array.last)
+        .After
+
+let private cues (frames: Frame[]) =
+    frames |> Array.map _.Cue |> List.ofArray
+
+let private indexOf (cue: Cue) (frames: Frame[]) =
+    frames |> Array.findIndex (fun f -> f.Cue = cue)
+
+[<Tests>]
+let tests =
+    testList
+        "MapModel"
+        [
+            test "timed names and admission events are readable" {
+                use graph = new Graph ()
+                use _ = graph.Activate ()
+                let input = createSignal 0
+                let output = debounce System.TimeSpan.Zero (fun () -> input.Value) graph
+                input.Value <- 2
+                let scene = sceneOf graph
+                let id = (output :> INode).Id
+                Expect.equal (MapModel.name scene id) "timed" "distinct unlabelled kind"
+                let frames = MapModel.frames MapModel.start (Trace.events graph)
+
+                Expect.isTrue
+                    (frames
+                     |> Array.exists (fun f -> f.Log = "capture timed = 2" && f.Cue = Said))
+                    "capture logs before publication"
+
+                Expect.isTrue
+                    (frames
+                     |> Array.exists (fun f -> f.Log = "publish timed = 2"))
+                    "publication is explicit"
+            }
+
+            test "timed replay preserves published state through pending capture and cancellation" {
+                use graph = new Graph ()
+                use _ = graph.Activate ()
+                let clock = MapClock ()
+                let ready = createAsyncSource<int>()
+                ready.Settle 0
+                let source = createSignal ready
+
+                let output =
+                    debounceWith { Clock = clock; Comparer = None } (System.TimeSpan.FromMilliseconds 100.) (fun () -> source.Value.Value) graph
+
+                let id = (output :> INode).Id
+                ready.Settle 2
+                let held = sceneOf graph
+                Expect.equal held.Snapshot.Nodes[id].Value (Some "0") "capturing does not publish"
+                Expect.equal held.Captured[id] "2" "captured input is separate"
+                Expect.isTrue held.Timing[id].WindowOpen "candidate is held"
+                Expect.isFalse (MapModel.pending held id) "a timer is not an async flight"
+                clock.Advance 100.
+                source.Value <- createAsyncSource<int>()
+                let frames = MapModel.frames MapModel.start (Trace.events graph)
+                let scene = (Array.last frames).After
+                Expect.equal scene.Snapshot.Nodes[id].Value (Some "2") "pending capture retains admission"
+                Expect.equal scene.Captured[id] "pending" "pending is a capture state"
+                Expect.isFalse (MapModel.pending scene id) "published ready state is not dimmed"
+                Expect.isFalse (scene.Errors.ContainsKey id) "no published error"
+                Expect.isFalse scene.Timing[id].WindowOpen "pending cancels timing"
+
+                Expect.isTrue
+                    (frames
+                     |> Array.exists (fun f -> f.Cue = Surge (id, []) && f.Event.Payload = box 2))
+                    "admission survives later pending run"
+
+                let replay = TraceModel.parseDump (Trace.dumpText graph)
+
+                let replayed =
+                    MapModel.frames MapModel.start replay.Events
+                    |> Array.last
+
+                Expect.equal replayed.After.Timing scene.Timing "schema 2 timing survives replay"
+                output.Dispose ()
+                let disposed = sceneOf graph
+                Expect.isFalse (disposed.Timing.ContainsKey id) "disposal clears timing diagnostics"
+            }
+
+            test "timed failure remains visible during a later pending capture" {
+                use graph = new Graph ()
+                use _ = graph.Activate ()
+                let source = createSignal (createAsyncSource<int>())
+                source.Peek.Fail (System.Exception "offline")
+                let output = debounce System.TimeSpan.Zero (fun () -> source.Value.Value) graph
+                let id = (output :> INode).Id
+                source.Value <- createAsyncSource<int>()
+                let scene = sceneOf graph
+                Expect.isFalse (scene.Errors.ContainsKey id) "pending replaces failure before any readiness"
+                source.Peek.Settle 1
+                source.Peek.Fail (System.Exception "offline")
+                source.Value <- createAsyncSource<int>()
+                let held = sceneOf graph
+                Expect.isTrue (held.Errors.ContainsKey id) "pending capture retains published failure after readiness"
+                Expect.isFalse (MapModel.pending held id) "failure is not an async flight"
+            }
+
+            test "initial timed pending publication is pending until its first ready value" {
+                use graph = new Graph ()
+                use _ = graph.Activate ()
+                let source = createAsyncSource<int>()
+                let output = debounce System.TimeSpan.Zero (fun () -> source.Value) graph
+                let id = (output :> INode).Id
+                let pendingFrames = MapModel.frames MapModel.start (Trace.events graph)
+
+                let published =
+                    pendingFrames
+                    |> Array.find (fun f ->
+                        f.Event.Kind = TraceEventKind.TimedPublished
+                        && f.Event.Node = id)
+
+                Expect.isTrue (MapModel.pending published.After id) "pending at publication frame, before timing snapshot"
+                source.Settle 3
+                let frames = MapModel.frames MapModel.start (Trace.events graph)
+
+                let ready =
+                    frames
+                    |> Array.findBack (fun f ->
+                        f.Event.Kind = TraceEventKind.TimedPublished
+                        && f.Event.Node = id)
+
+                Expect.isFalse (MapModel.pending ready.After id) "first ready publication immediately clears pending"
+            }
+
+            test "a said frame logs its text and keeps the scene" {
+                let c = cart ()
+                let scene = sceneOf c.Graph
+                let frame = MapModel.said scene "set Qty = 3"
+                Expect.equal frame.Cue Said "its cue"
+                Expect.equal frame.Log "set Qty = 3" "its line"
+                Expect.isTrue (obj.ReferenceEquals (frame.After, scene)) "the scene it leaves"
+            }
+
+            test "a write pulses the subtotal before the total runs" {
+                let c = cart ()
+
+                let frames =
+                    framesOf c (fun () -> c.Lines.Value <- [ { Sku = "tea"; Price = 4m; Qty = 2 } ])
+
+                let linesId = (c.Lines :> INode).Id
+                let pulse = indexOf (Pulse (linesId, c.Subtotal)) frames
+                let ring = indexOf (Ring c.Total) frames
+                Expect.isLessThan pulse ring "the pulse travels before the total runs"
+                Expect.equal (indexOf (Flash linesId) frames) 0 "the write comes first"
+                Expect.equal frames[0].Log "write lines = [{ Sku = \"tea\"; Price = 4M; Qty = 2 }]" "the log names the write"
+            }
+
+            test "two quick writes drop the first flight" {
+                let c = cart ()
+
+                let frames =
+                    framesOf c (fun () ->
+                        c.Lines.Value <- [ { Sku = "tea"; Price = 4m; Qty = 2 } ]
+                        c.Lines.Value <- [ { Sku = "tea"; Price = 4m; Qty = 3 } ])
+
+                Expect.contains (cues frames) (Drop c.Shipping) "an older flight drops"
+
+                let drop =
+                    frames
+                    |> Array.find (fun f -> f.Cue = Drop c.Shipping)
+
+                Expect.equal drop.Log "drop shipping (superseded)" "the log gives the reason"
+                let last = (Array.last frames).After
+                Expect.isTrue (last.Flights.ContainsKey c.Shipping) "the newest flight stays in progress"
+            }
+
+            test "settle after two writes settles the live flight" {
+                let c = cart ()
+
+                let frames =
+                    framesOf c (fun () ->
+                        c.Lines.Value <- [ { Sku = "tea"; Price = 4m; Qty = 2 } ]
+                        c.Lines.Value <- [ { Sku = "tea"; Price = 4m; Qty = 3 } ]
+                        c.Desk.Settle 5m)
+
+                Expect.contains (cues frames) (Settled c.Shipping) "the live flight settles"
+                Expect.equal c.Desk.Pending 0 "the desk forgot the older request"
+                let last = (Array.last frames).After
+                Expect.isFalse (last.Flights.ContainsKey c.Shipping) "no flight in progress"
+                Expect.isFalse (MapModel.pending last c.Shipping) "the settled node is no longer pending"
+                Expect.equal last.Snapshot.Nodes[c.Total].Value (Some "17") "the total takes the quote"
+            }
+
+            test "a failure lands in Errors with its message" {
+                let c = cart ()
+                let frames = framesOf c (fun () -> c.Desk.Fail "quote down")
+                Expect.contains (cues frames) (Failed c.Shipping) "the flight fails"
+                let last = (Array.last frames).After
+                Expect.stringContains last.Errors[c.Shipping] "quote down" "the error keeps its message"
+                Expect.isFalse (last.Flights.ContainsKey c.Shipping) "no flight in progress"
+            }
+
+            test "a memo whose run fails is failed, and a later run clears it" {
+                let q = quote ()
+                q.Price.Settle 4m
+                q.Price.Fail (exn "offline")
+                let failed = sceneOf q.Graph
+
+                Expect.stringContains
+                    (failed.Errors.TryFind q.Total
+                     |> Option.defaultValue "")
+                    "offline"
+                    "the memo carries the error"
+
+                Expect.isFalse (failed.Errors.ContainsKey q.View) "the boundary recovered"
+                q.Price.Settle 5m
+                let settled = sceneOf q.Graph
+                Expect.isFalse (settled.Errors.ContainsKey q.Total) "the memo recovered"
+                Expect.equal settled.Snapshot.Nodes[q.Total].Value (Some "15") "with its new value"
+            }
+
+            test "a run that suspends keeps the value readers saw" {
+                let q = quote ()
+                let frames = MapModel.frames MapModel.start (Trace.events q.Graph)
+
+                Expect.all
+                    frames
+                    (fun f ->
+                        f.After.Snapshot.Nodes.TryFind q.Total
+                        |> Option.forall (fun n -> n.Value.IsNone))
+                    "no placeholder value"
+
+                Expect.isFalse
+                    (frames
+                     |> Array.exists (fun f -> f.Cue = Surge (q.Total, [ q.View ])))
+                    "nothing travels"
+
+                Expect.equal (sceneOf q.Graph).Snapshot.Nodes[q.View].Value (Some "Loading") "the boundary shows its fallback"
+            }
+
+            test "a read of a pending source waits on it" {
+                let c = cart ()
+                let frames = MapModel.frames MapModel.start (Trace.events c.Graph)
+                Expect.contains (cues frames) (Waits (c.Total, c.Shipping)) "the total suspends"
+                let last = (Array.last frames).After
+                Expect.equal (last.Waiting.TryFind c.Total) (Some c.Shipping) "the total waits on the shipping"
+                Expect.isTrue (last.Flights.ContainsKey c.Shipping) "the first flight is in progress"
+                Expect.isTrue (MapModel.pending last c.Shipping) "the node in flight is pending"
+                Expect.isTrue (MapModel.pending last c.Total) "the reader waiting on it is pending"
+            }
+
+            test "the last scene agrees with the snapshot, labels from Trace.named included" {
+                use g = new Graph ()
+                use _ = g.Activate ()
+                let a = Trace.named "a" (fun () -> createSignal 1)
+                let b = Trace.named "b" (fun () -> createMemo (fun _ -> a.Value * 2))
+                createEffect (fun () -> b.Value |> ignore)
+                a.Value <- 3
+                let events = Trace.events g
+                let expected = TraceModel.snapshot events
+
+                let actual =
+                    (MapModel.frames MapModel.start events
+                     |> Array.last)
+                        .After.Snapshot
+
+                let view (s: TraceSnapshot) =
+                    s.Nodes
+                    |> Map.map (fun _ n -> TraceModel.pathOf s n.Id, n.Label, n.Value, n.Status)
+
+                Expect.equal (view actual) (view expected) "paths, labels, values and statuses agree"
+
+                Expect.equal
+                    (MapModel.name
+                        { MapModel.start with
+                            Snapshot = actual
+                        }
+                        (a :> INode).Id)
+                    "a"
+                    "the name is the label"
+
+                Expect.equal (MapModel.frames MapModel.start events).Length events.Length "one frame per event"
+            }
+
+            test "an unlabelled node is named by its kind" {
+                use g = new Graph ()
+                use _ = g.Activate ()
+                let a = createSignal 1
+                createEffect (fun () -> a.Value |> ignore)
+                let snapshot = TraceModel.snapshot (Trace.events g)
+
+                let effect =
+                    snapshot.Nodes.Values
+                    |> Seq.find (fun n -> n.Kind = TraceNodeKind.Effect)
+
+                Expect.equal
+                    (MapModel.name
+                        { MapModel.start with
+                            Snapshot = snapshot
+                        }
+                        effect.Id)
+                    "effect"
+                    "the kind, in lower case"
+            }
+
+            test "frames played in two batches reach the same scene as one" {
+                let c = cart ()
+                c.Lines.Value <- [ { Sku = "tea"; Price = 4m; Qty = 2 } ]
+                c.Desk.Settle 5m
+                let events = Trace.events c.Graph
+
+                let whole =
+                    (MapModel.frames MapModel.start events
+                     |> Array.last)
+                        .After
+
+                let half = events.Length / 2
+
+                let first =
+                    (MapModel.frames MapModel.start events[.. half - 1]
+                     |> Array.last)
+                        .After
+
+                let both = (MapModel.frames first events[half..] |> Array.last).After
+                Expect.equal both.Snapshot.Nodes whole.Snapshot.Nodes "the same nodes"
+                Expect.equal both.Flights whole.Flights "the same flights"
+                Expect.equal (MapModel.stateAt MapModel.start (MapModel.frames MapModel.start events) -1) MapModel.start "before the first frame"
+            }
+
+            test "the timeline spans the frames after setup" {
+                Expect.equal (MapModel.tickAt 2 6 1) None "a setup frame has no tick"
+                Expect.equal (MapModel.tickAt 2 6 2) (Some 0.25) "the first frame after setup"
+                Expect.equal (MapModel.tickAt 2 6 5) (Some 1.0) "the last frame ends the track"
+                Expect.equal (MapModel.tickAt 0 4 0) (Some 0.25) "no setup: every frame counts"
+            }
+
+            test "the cursor stays between the baseline and the last frame" {
+                Expect.equal (MapModel.clampCursor 3 10 -1) 2 "before the baseline: the baseline"
+                Expect.equal (MapModel.clampCursor 3 10 5) 5 "inside: unchanged"
+                Expect.equal (MapModel.clampCursor 3 10 42) 9 "past the end: the last frame"
+                Expect.equal (MapModel.clampCursor 0 0 4) -1 "no frames: before the first"
+            }
+
+            test "edges join visible sources to their observers" {
+                let c = cart ()
+
+                let scene =
+                    (MapModel.frames MapModel.start (Trace.events c.Graph)
+                     |> Array.last)
+                        .After
+
+                let edges = MapModel.edges scene
+                Expect.contains edges ((c.Lines :> INode).Id, c.Subtotal) "lines feeds the subtotal"
+                Expect.contains edges (c.Shipping, c.Total) "shipping feeds the total"
+            }
+
+            test "a projection is drawn as one node between its source and its readers" {
+                use g = new Graph ()
+                use _ = g.Activate ()
+                let lines = createSignal [ "tea"; "jam" ]
+                Trace.label (g, lines, "lines")
+                let rows = createProjection id String.length (fun () -> lines.Value :> seq<_>)
+                Trace.label (g, rows, "rows")
+                let total = createMemo (fun _ -> rows.Keys |> Array.sumBy rows.Get)
+                Trace.label (g, total, "total")
+                createEffect (fun () -> total.Value |> ignore)
+                lines.Value <- [ "tea"; "jam"; "egg" ]
+
+                let collapse =
+                    { MapModel.start with
+                        Grouping = Collapse
+                    }
+
+                let frames = MapModel.frames collapse (Trace.events g)
+                let scene = (Array.last frames).After
+                let rowsId = (rows :> INode).Id
+                let totalId = (total :> INode).Id
+
+                let drawn =
+                    scene.Snapshot.Nodes.Values
+                    |> Seq.filter (MapModel.visible scene)
+                    |> Seq.map (fun n -> MapModel.name scene n.Id)
+                    |> Set.ofSeq
+
+                Expect.equal drawn (Set [ "lines"; "rows"; "total"; "effect" ]) "the rows, items and keys are hidden"
+
+                let edges =
+                    MapModel.edges scene
+                    |> List.filter (fun (s, o) -> s = rowsId || o = rowsId)
+
+                Expect.equal edges [ ((lines :> INode).Id, rowsId); (rowsId, totalId) ] "lines feeds rows, and rows feeds total"
+
+                Expect.isTrue
+                    (frames
+                     |> Array.exists (fun f -> f.Log = "new rows[egg] item"))
+                    "a part's log line names its collection and key"
+
+                Expect.isTrue
+                    (frames
+                     |> Array.forall (fun f ->
+                         match f.Cue with
+                         | Pulse (s, t) -> s <> t
+                         | _ -> true))
+                    "a mark inside the collection plays no pulse"
+            }
+
+            test "a stream's start, burst, restart and completion render as the spec's table" {
+                use g = new Graph ()
+                use _ = g.Activate ()
+                let feed = Feed<int>()
+                let topic = createSignal 0
+                Trace.label (g, topic, "topic")
+
+                let news =
+                    Trace.named "news" (fun () ->
+                        createStreamFold 0 (+) (fun _ ->
+                            topic.Value |> ignore
+                            feed.Source))
+
+                createEffect (fun () -> news.TryValue |> ignore)
+                feed.Burst [ 1; 2; 3 ]
+                topic.Value <- 1
+                feed.Push 4
+                feed.Complete ()
+
+                let frames = MapModel.frames MapModel.start (Trace.events g)
+                let lines = frames |> Array.map _.Log |> List.ofArray
+
+                for line in
+                    [
+                        "start news (stream 1)"
+                        "publish news = 6 (3 items)"
+                        "drop news (restarted)"
+                        "start news (stream 2)"
+                        "end news (completed)"
+                    ] do
+                    Expect.contains lines line "log line"
+
+                Expect.equal feed.Starts 2 "one restart"
+                let newsId = (news :> INode).Id
+                let cuesOf = cues frames
+                Expect.contains cuesOf (Opened newsId) "a start opens the outline"
+                Expect.contains cuesOf (Drop newsId) "a restart drops"
+                Expect.contains cuesOf (Closed newsId) "completion closes"
+                Expect.isTrue ((sceneOf g).OpenStreams.IsEmpty) "no stream is open once completed"
+
+            }
+
+            test "an open stream is in the scene until it ends, and a failed one draws failed" {
+                use g = new Graph ()
+                use _ = g.Activate ()
+                let feed = Feed<int>()
+                let news = createStream (fun _ -> feed.Source)
+                Trace.label (g, news, "news")
+                createEffect (fun () -> news.TryValue |> ignore)
+                feed.Push 1
+                let newsId = (news :> INode).Id
+                Expect.isTrue ((sceneOf g).OpenStreams.Contains newsId) "open while running"
+                feed.Fail "down"
+                let frames = MapModel.frames MapModel.start (Trace.events g)
+                Expect.contains (cues frames) (Failed newsId) "the failure draws"
+                Expect.isFalse ((sceneOf g).OpenStreams.Contains newsId) "closed once failed"
+
+                Expect.isTrue
+                    (frames
+                     |> Array.exists (fun f -> f.Log = "fail news: Exception: down"))
+                    "the failure logs"
+            }
+
+            test "an expanded projection draws a row per key and its factory's nodes beside the row" {
+                use g = new Graph ()
+                use _ = g.Activate ()
+                let desk = Desk<int>(true)
+                let lines = createSignal [ "tea"; "jam" ]
+                Trace.label (g, lines, "lines")
+
+                let rows =
+                    createProjectionWith
+                        id
+                        (fun item ->
+                            let quote = createAsync (fun _ _ -> desk.Quote (String.length (item ())))
+                            Trace.label (g, quote, "quote")
+                            fun () -> quote.Value)
+                        (fun () -> lines.Value :> seq<_>)
+
+                Trace.label (g, rows, "rows")
+
+                for key in [ "tea"; "jam" ] do
+                    createEffect (fun () -> rows.Get key |> ignore)
+
+                let frames = MapModel.frames MapModel.start (Trace.events g)
+                let scene = (Array.last frames).After
+                let rowsId = (rows :> INode).Id
+                let boxed = MapModel.rows scene rowsId
+
+                Expect.equal (boxed |> List.map (fst >> MapModel.caption scene)) [ "tea"; "jam" ] "one row per key, captioned by its key"
+
+                for row, members in boxed do
+                    Expect.equal (members |> List.map (MapModel.caption scene)) [ "quote" ] "the key's quote sits beside its row"
+                    Expect.contains (MapModel.edges scene) (members.Head, row) "the quote feeds its row"
+                    Expect.isTrue (MapModel.pending scene row) "the row is pending while its quote is in flight"
+
+                Expect.isTrue (MapModel.pending scene rowsId) "the collection is pending while a row is"
+                Expect.equal (MapModel.name scene (snd boxed.Head).Head) "rows[tea] quote" "a member's name carries its key"
+                Expect.contains (MapModel.edges scene) (rowsId, (snd boxed.Head).Head) "the item feeds the key's quote from the collection"
+
+                desk.Settle 3
+
+                let scene =
+                    (MapModel.frames MapModel.start (Trace.events g)
+                     |> Array.last)
+                        .After
+
+                let tea, jam = fst boxed.Head, fst boxed[1]
+                Expect.isFalse (MapModel.pending scene tea) "the settled row is idle"
+                Expect.isTrue (MapModel.pending scene jam) "the other row is still pending"
+            }
+
+            test "a collapsed projection draws its factory's nodes as the collection" {
+                use g = new Graph ()
+                use _ = g.Activate ()
+                let lines = createSignal [ "tea" ]
+
+                let rows =
+                    createProjectionWith
+                        id
+                        (fun item ->
+                            let size = createMemo (fun _ -> String.length (item ()))
+                            fun () -> size.Value)
+                        (fun () -> lines.Value :> seq<_>)
+
+                createEffect (fun () -> rows.Get "tea" |> ignore)
+
+                let collapse =
+                    { MapModel.start with
+                        Grouping = Collapse
+                    }
+
+                let scene =
+                    (MapModel.frames collapse (Trace.events g)
+                     |> Array.last)
+                        .After
+
+                let drawn =
+                    scene.Snapshot.Nodes.Values
+                    |> Seq.filter (MapModel.visible scene)
+                    |> Seq.length
+
+                Expect.equal drawn 3 "lines, rows and the effect"
+                Expect.isEmpty (MapModel.rows scene (rows :> INode).Id) "a collapsed collection has no rows"
+            }
+
+            test "a lookup's cells are drawn as the lookup's state" {
+                use g = new Graph ()
+                use _ = g.Activate ()
+                let selected = createSignal 1
+                Trace.label (g, selected, "selected")
+
+                let isSelected =
+                    Trace.named "isSelected" (fun () -> createSelector (fun () -> selected.Value))
+
+                let row = createMemo (fun _ -> isSelected.Get 2)
+                Trace.label (g, row, "row")
+                createEffect (fun () -> row.Value |> ignore)
+                selected.Value <- 2
+
+                let collapse =
+                    { MapModel.start with
+                        Grouping = Collapse
+                    }
+
+                let scene =
+                    (MapModel.frames collapse (Trace.events g)
+                     |> Array.last)
+                        .After
+
+                let rowId = (row :> INode).Id
+
+                let sources =
+                    MapModel.edges scene
+                    |> List.filter (fun (_, o) -> o = rowId)
+                    |> List.map fst
+
+                Expect.equal sources.Length 1 "the row reads one drawn node"
+                let state = sources.Head
+
+                Expect.contains (MapModel.edges scene) ((selected :> INode).Id, state) "the state reads selected"
+                Expect.equal (MapModel.name scene state) "isSelected" "the state takes the lookup's name"
+            }
+
+            test "layout starts a node below the rows its layer's earlier nodes span" {
+                let placed =
+                    Layout.placeSpanned (fun id -> if id = 1 then 3 else 1) [ 1; 2; 3 ] Map.empty
+
+                Expect.equal placed (Map [ 1, (0, 0); 2, (0, 3); 3, (0, 4) ]) "the box of 1 takes three rows"
+            }
+
+            test "layout orders observers by the row their edge leaves from" {
+                let sources = Map [ 2, [ 1, 2.0 ]; 3, [ 1, 1.0 ] ]
+
+                let placed =
+                    Layout.placeSpanned (fun id -> if id = 1 then 3 else 1) [ 1; 2; 3 ] sources
+
+                Expect.equal (placed[3], placed[2]) ((1, 1), (1, 2)) "each reader sits level with its row"
+            }
+
+            test "layout layers a chain by longest path" {
+                let placed = Layout.place [ 1; 2; 3 ] (Map [ 2, [ 1 ]; 3, [ 2; 1 ] ])
+                Expect.equal placed (Map [ 1, (0, 0); 2, (1, 0); 3, (2, 0) ]) "one layer per step"
+            }
+
+            test "layout orders a layer by the barycentre of its sources" {
+                let sources = Map [ 3, [ 2 ]; 4, [ 1 ] ]
+                let placed = Layout.place [ 1; 2; 3; 4 ] sources
+                Expect.equal placed[4] (1, 0) "the observer of the first source comes first"
+                Expect.equal placed[3] (1, 1) "then the observer of the second"
+                Expect.equal (Layout.place [ 4; 3; 2; 1 ] sources) placed "the order of the input does not matter"
+            }
+        ]
+#else
+[<Tests>]
+let tests = testList "MapModel" []
+#endif

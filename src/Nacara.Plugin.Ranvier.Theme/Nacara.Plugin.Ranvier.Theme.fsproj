@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <RootNamespace>Nacara.Plugins.Ranvier</RootNamespace>
+        <Version>0.1.0</Version>
+        <PackageId>Nacara.Plugin.Ranvier.Theme</PackageId>
+        <Title>Nacara.Plugins.Ranvier</Title>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <IsPackable>true</IsPackable>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PackageLicenseExpression>MIT AND Apache-2.0</PackageLicenseExpression>
+        <Description>Server-rendered Nacara documentation theme built with Ranvier.View and Ranvier.Css.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Library.fs"/>
+        <Compile Include="Styles.fs"/>
+        <Compile Include="Markup.fs"/>
+        <Compile Include="Types.fs"/>
+        <Compile Include="Icons.fs"/>
+        <Compile Include="CodeBlocks.fs"/>
+        <Compile Include="Components.fs"/>
+        <Compile Include="Theme.fs"/>
+        <None Include="../../README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Nacara.Core" Version="2.0.0-beta.6" />
+      <PackageReference Include="Ranvier.Css.Bindings" Version="0.1.1-alpha.1" />
+      <PackageReference Include="Ranvier.Css.View" Version="0.1.1-alpha.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="assets/*.js" LogicalName="Nacara.Plugin.Ranvier.Theme.assets.%(Filename)%(Extension)" />
+        <None Include="../../THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="" />
+        <None Include="../../LICENSE-Nacara.txt" Pack="true" PackagePath="" />
+        <None Include="../../LICENSE-Apache-2.0.txt" Pack="true" PackagePath="" />
+    </ItemGroup>
+</Project>

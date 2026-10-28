@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><IsPackable>false</IsPackable><DefineConstants>$(DefineConstants);RANVIER_TRACE</DefineConstants></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="PipelineFixture.fs" />
+    <Compile Include="SignalMap.fs" />
+    <InternalsVisibleTo Include="Ranvier.Docs.Maps.Tests" />
+    <ProjectReference Include="model/Ranvier.Docs.MapModel.fsproj" />
+    <ProjectReference Include="$(RanvierViewRoot)/src/Ranvier.View.Dom/Ranvier.View.Dom.fsproj" />
+    <ProjectReference Include="$(RanvierViewRoot)/src/Fable.Ranvier.Anime/Fable.Ranvier.Anime.fsproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ranvier documentation source registry",
+  "type": "object",
+  "required": ["version", "sources"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 1 },
+    "title": { "type": "string" },
+    "baseUrl": { "type": "string", "pattern": "^/(?:[A-Za-z0-9._~-]+/)*$" },
+    "origin": { "type": "string", "format": "uri" },
+    "sources": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["id", "repository"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "kind": { "enum": ["docs", "dataset"] },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "repository": { "type": "string", "pattern": "^[\\w.-]+/[\\w.-]+$" },
+          "ref": { "type": "string", "minLength": 1 },
+          "route": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "local": { "type": "string" },
+          "self": { "type": "boolean" },
+          "manifest": { "type": "string", "minLength": 1 },
+          "content": { "type": "string", "minLength": 1 },
+          "defaults": { "$ref": "repository.schema.json" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

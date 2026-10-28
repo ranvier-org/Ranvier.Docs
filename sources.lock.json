@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "sources": {
+    "core": {
+      "repository": "ranvier-org/Ranvier",
+      "ref": "master",
+      "revision": "68041c0d2f9fff8230663a9e2f3352cba32c314b"
+    },
+    "view": {
+      "repository": "ranvier-org/Ranvier.View",
+      "ref": "main",
+      "revision": "22d9ed51fc261961c23454bc53461924bcbaadf0"
+    },
+    "css": {
+      "repository": "ranvier-org/Ranvier.Css",
+      "ref": "main",
+      "revision": "1b9ebfe2f9ceab212ec5a2f13a427ec020d88274"
+    },
+    "persistence": {
+      "repository": "ranvier-org/Ranvier.Persistence",
+      "ref": "main",
+      "revision": "54799273f671b9d1ea68176dd0fedc20c012b687"
+    },
+    "webcore": {
+      "repository": "ranvier-org/Ranvier.WebCore",
+      "ref": "main",
+      "revision": "615960e60dd8c9f97ad9ca4fc0b64da1bbbf7ff2"
+    },
+    "core-performance": {
+      "repository": "ranvier-org/Ranvier",
+      "ref": "perf-data",
+      "revision": "9928481d5c4b435ccf2998f99467eed9cd10c387"
+    }
+  }
+}

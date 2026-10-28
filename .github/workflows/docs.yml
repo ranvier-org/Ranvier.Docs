@@ -1,0 +1,72 @@
+name: Build shared documentation
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Publish the built site to GitHub Pages
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      RanvierTrace: 'true'
+      CustomBeforeMicrosoftCommonTargets: ${{ github.workspace }}/src/SourceDependencies.targets
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: npm
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - run: npm ci
+      - run: dotnet tool restore
+      - run: npm test
+      - run: npm run sources:fetch
+      - run: npm run build
+      - run: dotnet build Ranvier.Docs.slnx -c Release
+      - run: dotnet run --project tests/examples/Ranvier.Docs.Maps.Tests.fsproj -c Release --no-build
+      - run: dotnet run --project tests/Nacara.Plugin.Ranvier.Tests/Nacara.Plugin.Ranvier.Tests.fsproj -c Release --no-build
+      - run: dotnet fsi tests/examples/MetadataTests.fsx
+      - run: npm run check:links
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure-report
+          path: |
+            playwright-report
+            test-results
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docs-site-and-provenance
+          path: |
+            output
+            .generated/site.json
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name == 'workflow_dispatch' && inputs.deploy
+        with:
+          path: output
+  deploy:
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

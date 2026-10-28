@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <RanvierDocsRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))</RanvierDocsRoot>
+    <RanvierRoot Condition="'$(RanvierRoot)' == '' and Exists('$(RanvierDocsRoot)/../Ranvier/src/Ranvier/Ranvier.fsproj')">$(RanvierDocsRoot)/../Ranvier</RanvierRoot>
+    <RanvierRoot Condition="'$(RanvierRoot)' == ''">$(RanvierDocsRoot)/.sources/core</RanvierRoot>
+    <RanvierViewRoot Condition="'$(RanvierViewRoot)' == '' and Exists('$(RanvierDocsRoot)/../Ranvier.View/src/Ranvier.View/Ranvier.View.fsproj')">$(RanvierDocsRoot)/../Ranvier.View</RanvierViewRoot>
+    <RanvierViewRoot Condition="'$(RanvierViewRoot)' == ''">$(RanvierDocsRoot)/.sources/view</RanvierViewRoot>
+    <RanvierCssRoot Condition="'$(RanvierCssRoot)' == '' and Exists('$(RanvierDocsRoot)/../Ranvier.Css/src/Ranvier.Css/Ranvier.Css.fsproj')">$(RanvierDocsRoot)/../Ranvier.Css</RanvierCssRoot>
+    <RanvierCssRoot Condition="'$(RanvierCssRoot)' == ''">$(RanvierDocsRoot)/.sources/css</RanvierCssRoot>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ProjectReference>
+      <AdditionalProperties>CustomBeforeMicrosoftCommonTargets=$(RanvierDocsRoot)/src/SourceDependencies.targets;RanvierTrace=true</AdditionalProperties>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+</Project>

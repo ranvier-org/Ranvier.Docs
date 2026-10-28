@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Repository documentation configuration",
+  "type": "object",
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 1 },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "content": { "type": "string", "minLength": 1 },
+    "static": { "oneOf": [{ "type": "string", "minLength": 1 }, { "const": false }] },
+    "index": { "type": "string", "minLength": 1 },
+    "exclude": { "type": "array", "items": { "type": "string" } },
+    "unlisted": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["title", "pages"],
+        "properties": {
+          "title": { "type": "string", "minLength": 1 },
+          "pages": {
+            "type": "array", "items": {
+              "oneOf": [
+                { "type": "string", "minLength": 1 },
+                { "type": "object", "required": ["path"], "properties": {
+                  "path": { "type": "string", "minLength": 1 }, "title": { "type": "string" }
+                }, "additionalProperties": false }
+              ]
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "examplesProject": { "type": "string", "pattern": "\\.fsproj$" },
+    "packages": { "type": "array", "items": {
+      "type": "array", "prefixItems": [{ "type": "string", "minLength": 1 }, { "type": "string", "minLength": 1 }],
+      "minItems": 2, "maxItems": 2
+    } },
+    "browserBundles": { "type": "array", "items": {
+      "type": "object", "required": ["path", "route"],
+      "properties": { "path": { "type": "string", "minLength": 1 }, "route": { "type": "string", "minLength": 1 } },
+      "additionalProperties": false
+    } }
+  },
+  "additionalProperties": false
+}

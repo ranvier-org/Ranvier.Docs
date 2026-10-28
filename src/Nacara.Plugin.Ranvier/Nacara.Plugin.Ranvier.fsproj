@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Version>0.1.0-alpha.1</Version>
+    <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
+    <Description>Shared server-rendered Ranvier component and signal map fences for Nacara.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Theme.fs" />
+    <Compile Include="LiveExampleMetadata.fs" />
+    <Compile Include="RanvierExamples.fs" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.6" />
+    <PackageReference Include="Nacara.Core" Version="2.0.0-beta.6" />
+    <PackageReference Include="Nacara.Plugin.Assets.Esbuild" Version="1.0.0-beta.1" />
+    <ProjectReference Include="../Ranvier.Docs.Maps/authoring/Ranvier.Docs.MapAuthoring.fsproj" />
+    <ProjectReference Include="$(RanvierCssRoot)/src/Ranvier.Css.View/Ranvier.Css.View.fsproj" />
+    <ProjectReference Include="$(RanvierCssRoot)/src/Ranvier.Css.Bindings/Ranvier.Css.Bindings.fsproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><IsPackable>false</IsPackable></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Preset.fs" />
+    <ProjectReference Include="$(RanvierRoot)/src/Ranvier/Ranvier.fsproj" />
+    <ProjectReference Include="$(RanvierViewRoot)/src/Ranvier.View.Dom/Ranvier.View.Dom.fsproj" />
+    <ProjectReference Include="$(RanvierViewRoot)/src/Ranvier.View.Anime/Ranvier.View.Anime.fsproj" />
+    <ProjectReference Include="$(RanvierCssRoot)/src/Ranvier.Css.View/Ranvier.Css.View.fsproj" />
+    <ProjectReference Include="$(RanvierCssRoot)/src/Ranvier.Css.Bindings/Ranvier.Css.Bindings.fsproj" />
+    <ProjectReference Include="../Ranvier.Docs.Maps/Ranvier.Docs.Maps.fsproj" />
+  </ItemGroup>
+</Project>

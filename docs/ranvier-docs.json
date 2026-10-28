@@ -1,0 +1,12 @@
+{
+  "$schema": "../schemas/repository.schema.json",
+  "version": 1,
+  "title": "Documentation authoring",
+  "index": "index.md",
+  "sections": [
+    { "title": "Start here", "pages": ["index.md", "quick-start.md", "architecture.md"] },
+    { "title": "Connect a repository", "pages": ["repositories.md", "configuration.md", "navigation.md", "links-assets.md"] },
+    { "title": "Write and verify", "pages": ["examples.md", "runnable-examples.md", "theme.md", "preview.md", "troubleshooting.md"] },
+    { "title": "Maintain and publish", "pages": ["ci-publishing.md", "migration.md"] }
+  ]
+}

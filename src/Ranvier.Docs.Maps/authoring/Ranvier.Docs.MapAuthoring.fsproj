@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <IsPackable>false</IsPackable>
+        <RootNamespace>Ranvier.Docs.Maps.Authoring</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Ranvier.Docs.Maps.Tests" />
+        <Compile Include="MapFence.fs" />
+        <Compile Include="MapCode.fs" />
+        <Compile Include="MapPage.fs" />
+        <Compile Include="FenceScanner.fs" />
+        <Compile Include="MapWorkspace.fs" />
+    </ItemGroup>
+
+</Project>

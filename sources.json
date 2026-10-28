@@ -1,0 +1,22 @@
+{
+  "$schema": "./schemas/sources.schema.json",
+  "version": 1,
+  "title": "Ranvier",
+  "baseUrl": "/Ranvier.Docs/",
+  "origin": "https://ranvier-org.github.io",
+  "sources": [
+    { "id": "core", "title": "Reactive core", "repository": "ranvier-org/Ranvier", "ref": "master", "local": "../Ranvier" },
+    { "id": "view", "title": "Views and motion", "repository": "ranvier-org/Ranvier.View", "ref": "main", "local": "../Ranvier.View",
+      "defaults": { "browserBundles": [
+        { "path": "examples/Fable.Ranvier.Playground/dist", "route": "examples/playground" },
+        { "path": "examples/Ranvier.Motion/dist", "route": "examples/motion" },
+        { "path": "examples/Ranvier.Hydration/dist", "route": "examples/hydration" }
+      ] }
+    },
+    { "id": "css", "title": "Typed CSS", "repository": "ranvier-org/Ranvier.Css", "ref": "main", "local": "../Ranvier.Css" },
+    { "id": "persistence", "title": "Persistence", "repository": "ranvier-org/Ranvier.Persistence", "ref": "main", "local": "../Ranvier.Persistence" },
+    { "id": "webcore", "title": "WebCore host", "repository": "ranvier-org/Ranvier.WebCore", "ref": "main", "local": "../Ranvier.WebCore", "content": "docs" },
+    { "id": "docs", "title": "Documentation authoring", "repository": "ranvier-org/Ranvier.Docs", "ref": "main", "self": true },
+    { "id": "core-performance", "kind": "dataset", "repository": "ranvier-org/Ranvier", "ref": "perf-data" }
+  ]
+}

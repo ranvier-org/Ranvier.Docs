@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup Condition="'$(RanvierTrace)' == 'true'">
+    <DefineConstants>$(DefineConstants);RANVIER_TRACE</DefineConstants>
+  </PropertyGroup>
+</Project>

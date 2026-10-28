@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Ranvier.Docs.Maps.Tests</AssemblyName><IsPackable>false</IsPackable>
+    <DefineConstants>$(DefineConstants);RANVIER_TRACE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ModelTests.fs" /><Compile Include="AuthoringTests.fs" />
+    <Compile Include="ControlTests.fs" /><Compile Include="SceneViewTests.fs" />
+    <Compile Include="PageTests.fs" /><Compile Include="FenceScannerTests.fs" />
+    <Compile Include="ControlBarTests.fs" /><Compile Include="WorkspaceTests.fs" /><Compile Include="Main.fs" />
+    <PackageReference Include="Expecto" Version="11.0.0-alpha8" />
+    <PackageReference Include="Nacara.Plugin.Assets.Esbuild" Version="1.0.0-beta.1" />
+    <ProjectReference Include="../../src/Ranvier.Docs.Maps/model/Ranvier.Docs.MapModel.fsproj" />
+    <ProjectReference Include="../../src/Ranvier.Docs.Maps/authoring/Ranvier.Docs.MapAuthoring.fsproj" />
+    <ProjectReference Include="../../src/Ranvier.Docs.Maps/Ranvier.Docs.Maps.fsproj" />
+    <ProjectReference Include="$(RanvierViewRoot)/experiments/Ranvier.View.Twin/Ranvier.View.Twin.fsproj" />
+    <ProjectReference Include="$(RanvierViewRoot)/experiments/Ranvier.View.Testing/Ranvier.View.Testing.fsproj" />
+  </ItemGroup>
+</Project>

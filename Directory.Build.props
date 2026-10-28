@@ -1,0 +1,15 @@
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory).generated/DependencyRoots.props" Condition="Exists('$(MSBuildThisFileDirectory).generated/DependencyRoots.props')" />
+  <Import Project="$(MSBuildThisFileDirectory)src/DependencyRoots.props" />
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
+    <IsPackable>false</IsPackable>
+    <RanvierTrace>true</RanvierTrace>
+    <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" Version="11.0.101-rc1.26425.128" />
+  </ItemGroup>
+</Project>

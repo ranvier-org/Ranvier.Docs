@@ -1,0 +1,17 @@
+.sources/
+.generated/
+node_modules/
+**/bin/
+**/obj/
+output/
+test-results/
+playwright-report/
+.SageFs/
+**/.nacara/
+.generated-next-*/
+.generated-previous-*/
+.artifacts/
+*.log
+.nacara-*/
+*.fs.js
+*.fs.jsx
