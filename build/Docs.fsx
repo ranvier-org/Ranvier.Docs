@@ -100,11 +100,14 @@ let buildPreparedAssets () =
                 workingDir project
                 envVars vars
                 run (fun _ -> npm ["ci"; "--no-audit"; "--no-fund"])
-                // The example compiles with the Fickl its own repository pins, which may differ from this repository's.
-                run (dotnet ["tool"; "restore"; "--disable-parallel"])
                 run (dotnet ["build"; server; "-c"; "Release"; "-m:1"; "-p:BuildInParallel=false"])
                 run (dotnet ["run"; "--project"; server; "-c"; "Release"; "--no-build"; "--"; "--write-pages"])
-                run (dotnet ["fickl"; "Client.fsproj"; "--outDir"; "generated"; "--configuration"; "Release"])
+                // Run from this repository so its tool manifest supplies Fickl; the example's checkout carries a manifest of its own.
+                stage "compile the client with this repository's Fickl" {
+                    workingDir root
+                    envVars vars
+                    run (dotnet ["fickl"; "Client.fsproj"; "--cwd"; project; "--outDir"; "generated"; "--configuration"; "Release"])
+                }
                 run (node [Path.Combine(project, "node_modules/vite/bin/vite.js"); "build"])
             })
     let performance = plan.RootElement.GetProperty("performance")
