@@ -4,37 +4,37 @@
     "core": {
       "repository": "ranvier-org/Ranvier",
       "ref": "master",
-      "revision": "c1d03ddc6ba0aa2dabbdafd622e22f6d0c60b94c"
+      "revision": "25a4452669c0853f75c59724f7f7264959c3fa1a"
     },
     "view": {
       "repository": "ranvier-org/Ranvier.View",
       "ref": "main",
-      "revision": "165126e9e39ed40761bcf4b75391a549322dc259"
+      "revision": "e33bb1b309225e4e114eb8af146a2cd6b6731418"
     },
     "anime": {
       "repository": "ranvier-org/Ranvier.Anime",
       "ref": "main",
-      "revision": "343d527bc298459d40b229bd0a556516ca1e0489"
+      "revision": "5bfc534f684765e415856d3f6bfe65e3c3576bb0"
     },
     "css": {
       "repository": "ranvier-org/Ranvier.Css",
       "ref": "main",
-      "revision": "70bdedfd9c7b7b1881a45c4ffb6eb6d17034208b"
+      "revision": "4e403b39b1e3a8e618fd8bf605fdd2c44827740f"
     },
     "persistence": {
       "repository": "ranvier-org/Ranvier.Persistence",
       "ref": "main",
-      "revision": "8d56b0f4ed04bfe880aa06b97e79c4dd32af432c"
+      "revision": "88a0344854f65d50cdf5b20b9e0c1bac25a0116f"
     },
     "webcore": {
       "repository": "ranvier-org/Ranvier.WebCore",
       "ref": "main",
-      "revision": "cc19b4eac0df8ad9e3f05d691b4cb2b48f51fad1"
+      "revision": "18b5bdb96247fa3865f1f78499df14d84bf2aec5"
     },
     "core-performance": {
       "repository": "ranvier-org/Ranvier",
       "ref": "perf-data",
-      "revision": "84c0401efaf4e5417109727c2fcf9625d3dd2f06"
+      "revision": "36a23a83055007b7b75a2bc9e76fb01d7b3646e2"
     }
   }
 }
