@@ -9,7 +9,7 @@
     "view": {
       "repository": "ranvier-org/Ranvier.View",
       "ref": "main",
-      "revision": "e33bb1b309225e4e114eb8af146a2cd6b6731418"
+      "revision": "95db26a6d7f1091be78f43cad9c5ceabefe86d7b"
     },
     "anime": {
       "repository": "ranvier-org/Ranvier.Anime",
