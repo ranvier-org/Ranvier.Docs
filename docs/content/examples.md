@@ -92,7 +92,7 @@ count.Value <- 1
 
 Adjust the relative helper path if the page is at a different depth. Keep front matter inside its literate documentation comment; raw YAML before F# code is not valid F# source. A library can instead load its own content-local `.fs` helper when it needs extra definitions. Central example project extensions are the normal way to add extra library references to the preset.
 
-The core, View and CSS roots are exposed to the build as `RanvierRoot`, `RanvierViewRoot` and `RanvierCssRoot`. The build resolves these from the actual selected source checkouts. Avoid absolute developer-machine paths in checked-in sample projects.
+The core, View, Anime and CSS roots are exposed to the build as `RanvierRoot`, `RanvierViewRoot`, `RanvierAnimeRoot` and `RanvierCssRoot`. The build resolves these from the actual selected source checkouts. Avoid absolute developer-machine paths in checked-in sample projects.
 
 ## Motion examples
 

@@ -13,7 +13,7 @@ async function fixture(t) {
     await writeFile(path.join(root, name), name);
   }
   const sources = [];
-  for (const id of ['core', 'view', 'css']) {
+  for (const id of ['core', 'view', 'anime', 'css']) {
     const local = path.join(root, 'inputs', id);
     await mkdir(path.join(local, 'src'), { recursive: true });
     await mkdir(path.join(local, 'docs'), { recursive: true });

@@ -19,6 +19,7 @@ These links use source identities and are resolved by the central import, indepe
 
 - [Reactive core](repo:core/index.md)
 - [Views and motion](repo:view/index.md)
+- [Animation](repo:anime/index.md)
 - [Typed CSS](repo:css/index.md)
 - [Persistence](repo:persistence/index.md)
 - [WebCore accessibility](repo:webcore/ACCESSIBILITY.md)

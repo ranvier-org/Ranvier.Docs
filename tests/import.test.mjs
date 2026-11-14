@@ -144,6 +144,15 @@ test('custom content roots and route prefixes preserve local asset links', async
   assert.equal(plainBody(await readFile(path.join(f.root, '.generated/content/reactivity/guide.md'), 'utf8')), '# Guide\n![Diagram](images/diagram.svg)');
 });
 
+test('relative links that leave the content root go to the repository file at its imported revision', async t => {
+  const f = await fixture(t, ['core']);
+  await f.put('core', 'docs/content/guide/host.md', '# Host\n[Provider](../../../providers/atspi/README.md#build) [Sibling](other.md) [Up](../index.md) [Outside](../../../../elsewhere.md) ![Shot](../../shot.png)\n');
+  await f.put('core', 'docs/content/guide/other.md', '# Other\n');
+  await f.prepare();
+  assert.equal(plainBody(await readFile(path.join(f.root, '.generated/content/core/guide/host.md'), 'utf8')),
+    '# Host\n[Provider](https://github.com/ranvier-org/core/blob/main/providers/atspi/README.md#build) [Sibling](other.md) [Up](../index.md) [Outside](../../../../elsewhere.md) ![Shot](../../shot.png)\n');
+});
+
 test('heading anchors retain inline code and formatting in cross repository targets', async t => {
   const f = await fixture(t);
   await f.put('view', 'docs/content/api.md', '# API\n## Call `createSignal` safely\n## **Important** values\n');

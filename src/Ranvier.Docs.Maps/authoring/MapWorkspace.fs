@@ -285,15 +285,15 @@ module MapWorkspace =
 
         let dependencyRoots =
             [
-                for name in [ "Ranvier"; "Ranvier.View"; "Ranvier.Css" ] do
+                for name in [ "Ranvier"; "Ranvier.View"; "Ranvier.Anime"; "Ranvier.Css" ] do
                     yield Path.GetFullPath (Path.Combine (repository, "..", name, "src"))
-                for id in [ "core"; "view"; "css" ] do
+                for id in [ "core"; "view"; "anime"; "css" ] do
                     yield Path.Combine (repository, ".sources", id, "src")
                 let roots = Path.Combine (repository, ".generated", "DependencyRoots.props")
                 if File.Exists roots then
                     let document = System.Xml.Linq.XDocument.Load roots
                     for property in document.Descendants () do
-                        if List.contains property.Name.LocalName [ "RanvierRoot"; "RanvierViewRoot"; "RanvierCssRoot" ] then
+                        if List.contains property.Name.LocalName [ "RanvierRoot"; "RanvierViewRoot"; "RanvierAnimeRoot"; "RanvierCssRoot" ] then
                             yield Path.Combine (property.Value, "src")
             ]
 

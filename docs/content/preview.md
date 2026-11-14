@@ -12,7 +12,7 @@ dotnet fsi build.fsx -- prepare
 
 This validates imports and creates `.generated/content/`, `.generated/static/` and `.generated/site.json`. It is useful for inspecting menus and transformed source links before a full build. It does not compile F# examples or prove that generated HTML works.
 
-Use `--source id=path` to select one local checkout, `--local` to select configured local paths, and `--registry path/to/registry.json` for a different registry. Registry file paths are resolved from the host root. A custom registry still needs the core, view and css ids when using the shared build preset.
+Use `--source id=path` to select one local checkout, `--local` to select configured local paths, and `--registry path/to/registry.json` for a different registry. Registry file paths are resolved from the host root. A custom registry still needs the core, view, anime and css ids when using the shared build preset.
 
 ## Build once
 

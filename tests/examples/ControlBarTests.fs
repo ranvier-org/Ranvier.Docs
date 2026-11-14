@@ -3,7 +3,7 @@ module Ranvier.Docs.Maps.Tests.ControlBarTests
 open Expecto
 open global.Ranvier
 open Ranvier.View
-open Ranvier.View.Sugar
+open Ranvier.View.Dsl
 open Ranvier.View.Testing
 open Ranvier.View.Twin
 open Ranvier.Docs.Maps
@@ -63,11 +63,11 @@ let private bench =
 
             latest <- Some created
             created)
-        (div (Attrs.className "bar") { ControlBar.rows (fun (b: Bench) -> b.Items) })
+        (div (div.className "bar") { ControlBar.rows (fun (b: Bench) -> b.Items) })
 
-let private field (host: Fable.Core.TS.Dom.HTMLElement) (index: int) =
+let private field (host: Dom.HTMLElement) (index: int) =
     let fields = Query.queryAll host ".rv-map__input-field"
-    unbox<Fable.Core.TS.Dom.HTMLInputElement> fields[index]
+    unbox<Dom.HTMLInputElement> fields[index]
 
 let private set (session: Session) key value =
     let b = latest.Value

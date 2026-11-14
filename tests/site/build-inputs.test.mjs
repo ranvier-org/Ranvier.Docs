@@ -12,6 +12,7 @@ test('build inputs preserve portable dependency roots and project extensions wit
     const metadata = { sources: [
       { id: 'core', root: path.join(root, 'core & sources') },
       { id: 'view', root: path.join(root, 'view') },
+      { id: 'anime', root: path.join(root, 'anime') },
       { id: 'css', root: path.join(root, 'css'), examplesProject: 'examples/Custom.fsproj', packages: [['animejs', '4.5.0']] }
     ] };
     await writeBuildInputs(metadata, root);
@@ -20,6 +21,7 @@ test('build inputs preserve portable dependency roots and project extensions wit
     const helper = await readFile(path.join(root, '.generated/content/literate.fsx'), 'utf8');
     assert.match(properties, /core &amp; sources/);
     assert.match(properties, /<RanvierViewRoot>/);
+    assert.match(properties, /<RanvierAnimeRoot>/);
     assert.match(properties, /<RanvierCssRoot>/);
     assert.ok(project.includes(path.join(root, 'examples/Custom.fsproj')));
     assert.match(project, /Ranvier.Docs.Examples.fsproj/);
@@ -37,6 +39,7 @@ test('build inputs fail clearly for missing shared libraries or conflicting brow
   const metadata = { sources: [
     { id: 'core', root: '/core', packages: [['animejs', '4.5.0']] },
     { id: 'view', root: '/view', packages: [['animejs', '5.0.0']] },
+    { id: 'anime', root: '/anime' },
     { id: 'css', root: '/css' }
   ] };
   const root = await mkdtemp(path.join(os.tmpdir(), 'ranvier-conflict-'));
@@ -55,10 +58,12 @@ test('preview watches library APIs, central infrastructure and arbitrary manifes
   const folders = watchFolders({ browserBundleRoots: [browserProject], performanceWatchRoots: [dataset], sources: [
     { id: 'core', root: core, watchRoots: [path.join(core, 'docs'), customAssets] },
     { id: 'view', root: path.join(workspace, '.sources/view') },
+    { id: 'anime', root: path.join(workspace, '.sources/anime') },
     { id: 'css', root: path.join(workspace, '.sources/css') }
   ] }, workspace);
   assert.ok(folders.includes(path.join(core, 'src')));
   assert.ok(folders.includes(path.join(workspace, '.sources/view/src')));
+  assert.ok(folders.includes(path.join(workspace, '.sources/anime/src')));
   assert.ok(folders.includes(path.join(workspace, '.sources/css/src')));
   assert.ok(folders.includes(path.join(workspace, 'src')));
   assert.ok(folders.includes(path.join(workspace, '.config')));
