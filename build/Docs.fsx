@@ -101,7 +101,7 @@ let buildPreparedAssets () =
                 envVars vars
                 run (fun _ -> npm ["ci"; "--no-audit"; "--no-fund"])
                 // The example compiles with the Fickl its own repository pins, which may differ from this repository's.
-                run (dotnet ["tool"; "restore"])
+                run (dotnet ["tool"; "restore"; "--disable-parallel"])
                 run (dotnet ["build"; server; "-c"; "Release"; "-m:1"; "-p:BuildInParallel=false"])
                 run (dotnet ["run"; "--project"; server; "-c"; "Release"; "--no-build"; "--"; "--write-pages"])
                 run (dotnet ["fickl"; "Client.fsproj"; "--outDir"; "generated"; "--configuration"; "Release"])
