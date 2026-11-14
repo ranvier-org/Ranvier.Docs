@@ -6,6 +6,6 @@
     <InternalsVisibleTo Include="Ranvier.Docs.Maps.Tests" />
     <ProjectReference Include="model/Ranvier.Docs.MapModel.fsproj" />
     <ProjectReference Include="$(RanvierViewRoot)/src/Ranvier.View.Dom/Ranvier.View.Dom.fsproj" />
-    <ProjectReference Include="$(RanvierViewRoot)/src/Fable.Ranvier.Anime/Fable.Ranvier.Anime.fsproj" />
+    <ProjectReference Include="$(RanvierAnimeRoot)/src/Fable.Ranvier.Anime/Fable.Ranvier.Anime.fsproj" />
   </ItemGroup>
 </Project>

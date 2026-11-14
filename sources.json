@@ -13,6 +13,7 @@
         { "path": "examples/Ranvier.Hydration/dist", "route": "examples/hydration" }
       ] }
     },
+    { "id": "anime", "title": "Animation", "repository": "ranvier-org/Ranvier.Anime", "ref": "main", "local": "../Ranvier.Anime" },
     { "id": "css", "title": "Typed CSS", "repository": "ranvier-org/Ranvier.Css", "ref": "main", "local": "../Ranvier.Css" },
     { "id": "persistence", "title": "Persistence", "repository": "ranvier-org/Ranvier.Persistence", "ref": "main", "local": "../Ranvier.Persistence" },
     { "id": "webcore", "title": "WebCore host", "repository": "ranvier-org/Ranvier.WebCore", "ref": "main", "local": "../Ranvier.WebCore", "content": "docs" },

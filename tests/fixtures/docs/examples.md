@@ -30,15 +30,15 @@ controls [ button "Increment map" (fun () -> count.Value <- count.Value + 1) ]
 open Ranvier
 open Ranvier.Anime
 open Ranvier.View
-open Ranvier.View.Sugar
+open Ranvier.View.Dsl
 open Ranvier.View.Anime
 
 let motion =
     Component.template
         (fun _ () -> createSignal 0.)
         (div () {
-            button (Events.onClick (fun (position: Signal<float>) _ -> position.Value <- position.Value + 40.)) { "Move" }
-            div (Attrs.className "motion-target", Motion.follow "translateX" (AnimatableParams (duration = 100)) (fun (position: Signal<float>) -> position.Value)) { "Motion" }
+            button (button.onClick (fun (position: Signal<float>) _ -> position.Value <- position.Value + 40.)) { "Move" }
+            div (div.className "motion-target", Motion.follow "translateX" { ComposedAnimationOptions.Default with Duration = 100. } (fun (position: Signal<float>) -> position.Value)) { "Motion" }
         })
 ```
 

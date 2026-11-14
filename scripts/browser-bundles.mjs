@@ -39,8 +39,8 @@ async function execute(command, args, options) {
 export function browserBuildEnvironment(root, roots, inherited = process.env) {
   return { ...inherited, RanvierTrace: 'true', RanvierDocsRoot: root,
     RANVIER_DOCS_ROOT: root,
-    RANVIER_DOCS_CORE_ROOT: roots.core, RANVIER_DOCS_VIEW_ROOT: roots.view, RANVIER_DOCS_CSS_ROOT: roots.css,
-    RanvierRoot: roots.core, RanvierViewRoot: roots.view, RanvierCssRoot: roots.css,
+    RANVIER_DOCS_CORE_ROOT: roots.core, RANVIER_DOCS_VIEW_ROOT: roots.view, RANVIER_DOCS_ANIME_ROOT: roots.anime, RANVIER_DOCS_CSS_ROOT: roots.css,
+    RanvierRoot: roots.core, RanvierViewRoot: roots.view, RanvierAnimeRoot: roots.anime, RanvierCssRoot: roots.css,
     CustomBeforeMicrosoftCommonTargets: path.join(root, 'src/SourceDependencies.targets'),
     MSBUILDDISABLENODEREUSE: '1', DOTNET_CLI_USE_MSBUILD_SERVER: '0' };
 }
@@ -71,7 +71,7 @@ export async function planBrowserBundles(options = {}) {
   const bundles = requested.filter(bundle => standardViewBundles.some(standard => standard.path === bundle.path));
   if (!bundles.length) return [];
   const roots = {};
-  for (const id of ['core', 'view', 'css']) {
+  for (const id of ['core', 'view', 'anime', 'css']) {
     const source = registry.sources.find(source => source.id === id);
     if (!source) throw new Error(`Standard View browser examples require registered source '${id}'.`);
     roots[id] = (await loadSourceConfiguration(root, source, options)).root;

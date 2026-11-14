@@ -4,7 +4,8 @@
     <Compile Include="Preset.fs" />
     <ProjectReference Include="$(RanvierRoot)/src/Ranvier/Ranvier.fsproj" />
     <ProjectReference Include="$(RanvierViewRoot)/src/Ranvier.View.Dom/Ranvier.View.Dom.fsproj" />
-    <ProjectReference Include="$(RanvierViewRoot)/src/Ranvier.View.Anime/Ranvier.View.Anime.fsproj" />
+    <!-- The motion parts over anime.js: the assembly Fable compiles against; on .NET its bindings are inert, which is what server rendering needs. -->
+    <ProjectReference Include="$(RanvierViewRoot)/src/Fable.Ranvier.View.Anime/Fable.Ranvier.View.Anime.fsproj" />
     <ProjectReference Include="$(RanvierCssRoot)/src/Ranvier.Css.View/Ranvier.Css.View.fsproj" />
     <ProjectReference Include="$(RanvierCssRoot)/src/Ranvier.Css.Bindings/Ranvier.Css.Bindings.fsproj" />
     <ProjectReference Include="../Ranvier.Docs.Maps/Ranvier.Docs.Maps.fsproj" />

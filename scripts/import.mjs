@@ -284,6 +284,17 @@ function rewriteLinks(text, source, file, sources, pageText, baseUrl) {
     const destinationPath = `${destination.route}/${decoded}`;
     return slash(path.posix.relative(path.posix.dirname(current), destinationPath)).split('/').map(encodeURIComponent).join('/') + fragment;
   };
+  // A relative link that leaves the content root names a repository file that is not a page: it goes to the source at its imported revision.
+  const repositoryFileUrl = value => {
+    if (/^(?:[a-z][a-z0-9+.-]*:|[/#?])/i.test(value)) return null;
+    const [, target, suffix] = /^([^?#]*)(.*)$/.exec(value);
+    let decoded;
+    try { decoded = decodeURIComponent(target); } catch { return null; }
+    const content = slash(path.posix.normalize(slash(source.content ?? 'docs/content'))).replace(/\/$/, '');
+    const resolved = path.posix.normalize(path.posix.join(content, path.posix.dirname(slash(file)), decoded));
+    if (resolved === '..' || resolved.startsWith('../') || resolved === content || resolved.startsWith(content + '/')) return null;
+    return `https://github.com/${source.repository}/blob/${source.revision ?? source.ref}/` + resolved.split('/').map(encodeURIComponent).join('/') + suffix;
+  };
   const replacements = [];
   for (const region of markdownRegions(text, file)) {
     const part = text.slice(region.start, region.end);
@@ -292,7 +303,7 @@ function rewriteLinks(text, source, file, sources, pageText, baseUrl) {
         const span = destinationSpan(part, node);
         const start = region.start + span.start;
         const line = text.slice(0, start).split('\n').length;
-        const value = node.url.startsWith('repo:') ? resolveLink(node.url, line) : legacyUrl(node.url);
+        const value = node.url.startsWith('repo:') ? resolveLink(node.url, line) : legacyUrl(node.url) ?? (node.type === 'image' ? null : repositoryFileUrl(node.url));
         if (value !== null) replacements.push({ start, end: region.start + span.end, value });
       }
       if (node.type === 'html') {

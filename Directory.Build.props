@@ -8,6 +8,9 @@
     <IsPackable>false</IsPackable>
     <RanvierTrace>true</RanvierTrace>
     <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
+    <!-- The published Ranvier packages the theme declares; documentation builds replace them with the locked sources (src/SourceDependencies.targets). -->
+    <RanvierCssBindingsVersion>0.1.1</RanvierCssBindingsVersion>
+    <RanvierCssViewVersion>0.1.1-alpha.1</RanvierCssViewVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" Version="11.0.101-rc1.26425.128" />

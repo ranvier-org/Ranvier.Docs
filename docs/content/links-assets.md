@@ -17,6 +17,8 @@ Keep ordinary relative Markdown links:
 
 Paths are relative to the source page. The importer preserves the content directory's relative layout. Nacara resolves page routes and deployment prefixes when it renders the site. Link to source `.md` or `.fsx` files when possible instead of guessing their eventual HTML filename.
 
+A relative link that leaves the content directory but stays inside the repository, such as `../../src/Library/README.md`, names a file that is not a page. The importer rewrites it to that file on GitHub at the imported revision. Images are not rewritten; keep them inside the content or static directory.
+
 ## Links to another repository
 
 Use the stable source id followed by the destination's content-relative path:

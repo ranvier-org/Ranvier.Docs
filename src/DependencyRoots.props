@@ -5,6 +5,8 @@
     <RanvierRoot Condition="'$(RanvierRoot)' == ''">$(RanvierDocsRoot)/.sources/core</RanvierRoot>
     <RanvierViewRoot Condition="'$(RanvierViewRoot)' == '' and Exists('$(RanvierDocsRoot)/../Ranvier.View/src/Ranvier.View/Ranvier.View.fsproj')">$(RanvierDocsRoot)/../Ranvier.View</RanvierViewRoot>
     <RanvierViewRoot Condition="'$(RanvierViewRoot)' == ''">$(RanvierDocsRoot)/.sources/view</RanvierViewRoot>
+    <RanvierAnimeRoot Condition="'$(RanvierAnimeRoot)' == '' and Exists('$(RanvierDocsRoot)/../Ranvier.Anime/src/Ranvier.Anime/Ranvier.Anime.fsproj')">$(RanvierDocsRoot)/../Ranvier.Anime</RanvierAnimeRoot>
+    <RanvierAnimeRoot Condition="'$(RanvierAnimeRoot)' == ''">$(RanvierDocsRoot)/.sources/anime</RanvierAnimeRoot>
     <RanvierCssRoot Condition="'$(RanvierCssRoot)' == '' and Exists('$(RanvierDocsRoot)/../Ranvier.Css/src/Ranvier.Css/Ranvier.Css.fsproj')">$(RanvierDocsRoot)/../Ranvier.Css</RanvierCssRoot>
     <RanvierCssRoot Condition="'$(RanvierCssRoot)' == ''">$(RanvierDocsRoot)/.sources/css</RanvierCssRoot>
   </PropertyGroup>
