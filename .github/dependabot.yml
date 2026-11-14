@@ -1,9 +1,13 @@
 version: 2
-# Declared so Dependabot's proxy allows this host: a feed named only in nuget.config is blocked.
+# Declared so Dependabot's proxy allows these hosts: a feed named only in nuget.config is blocked.
 registries:
   xantham-cloudsmith:
     type: nuget-feed
     url: https://nuget.cloudsmith.io/shayanhabibi/xantham/v3/index.json
+  # A Cloudsmith feed serves its packages from this second host, which the proxy blocks unless it is declared too.
+  xantham-cloudsmith-packages:
+    type: nuget-feed
+    url: https://dl.cloudsmith.io/public/shayanhabibi/xantham/nuget/index.json
 
 updates:
   # Keeps the Fickl compiler in .config/dotnet-tools.json at the latest release; nothing else is rolled.
@@ -11,6 +15,7 @@ updates:
     directory: "/"
     registries:
       - xantham-cloudsmith
+      - xantham-cloudsmith-packages
     schedule:
       interval: daily
     open-pull-requests-limit: 1
