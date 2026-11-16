@@ -9,7 +9,7 @@
     "view": {
       "repository": "ranvier-org/Ranvier.View",
       "ref": "main",
-      "revision": "95db26a6d7f1091be78f43cad9c5ceabefe86d7b"
+      "revision": "39f51599d3bea2342b108c01bd95939e8a00ff1d"
     },
     "anime": {
       "repository": "ranvier-org/Ranvier.Anime",
@@ -29,7 +29,7 @@
     "webcore": {
       "repository": "ranvier-org/Ranvier.WebCore",
       "ref": "main",
-      "revision": "18b5bdb96247fa3865f1f78499df14d84bf2aec5"
+      "revision": "c542222e57f92a0e2c1a3968e647d315a123c4da"
     },
     "core-performance": {
       "repository": "ranvier-org/Ranvier",
