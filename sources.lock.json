@@ -29,7 +29,7 @@
     "webcore": {
       "repository": "ranvier-org/Ranvier.WebCore",
       "ref": "main",
-      "revision": "c542222e57f92a0e2c1a3968e647d315a123c4da"
+      "revision": "cf1c3770f64c3fd18d498982e6a0d4e459ec8cfa"
     },
     "core-performance": {
       "repository": "ranvier-org/Ranvier",
