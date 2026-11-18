@@ -26,6 +26,11 @@
       "ref": "main",
       "revision": "88a0344854f65d50cdf5b20b9e0c1bac25a0116f"
     },
+    "keyboard": {
+      "repository": "ranvier-org/Ranvier.Keyboard",
+      "ref": "main",
+      "revision": "7ff8427f58d289bccb8d335dc36a3d5e48cc0189"
+    },
     "webcore": {
       "repository": "ranvier-org/Ranvier.WebCore",
       "ref": "main",
