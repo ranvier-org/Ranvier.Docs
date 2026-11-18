@@ -22,6 +22,7 @@ These links use source identities and are resolved by the central import, indepe
 - [Animation](repo:anime/index.md)
 - [Typed CSS](repo:css/index.md)
 - [Persistence](repo:persistence/index.md)
+- [Keyboard](repo:keyboard/index.md)
 - [WebCore accessibility](repo:webcore/ACCESSIBILITY.md)
 
 ## Implementation versus migration
