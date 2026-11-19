@@ -4,42 +4,77 @@
     "core": {
       "repository": "ranvier-org/Ranvier",
       "ref": "master",
-      "revision": "25a4452669c0853f75c59724f7f7264959c3fa1a"
-    },
-    "view": {
-      "repository": "ranvier-org/Ranvier.View",
-      "ref": "main",
-      "revision": "39f51599d3bea2342b108c01bd95939e8a00ff1d"
-    },
-    "anime": {
-      "repository": "ranvier-org/Ranvier.Anime",
-      "ref": "main",
-      "revision": "5bfc534f684765e415856d3f6bfe65e3c3576bb0"
-    },
-    "css": {
-      "repository": "ranvier-org/Ranvier.Css",
-      "ref": "main",
-      "revision": "4e403b39b1e3a8e618fd8bf605fdd2c44827740f"
+      "revision": "c04a241bd8063faaac06fabe96669137c0ae1059"
     },
     "persistence": {
       "repository": "ranvier-org/Ranvier.Persistence",
       "ref": "main",
-      "revision": "88a0344854f65d50cdf5b20b9e0c1bac25a0116f"
+      "revision": "6b24622b90dfdb6097ae1b12385492fc4bd50bef"
+    },
+    "barewire": {
+      "repository": "ranvier-org/Ranvier.BAREWire",
+      "ref": "main",
+      "revision": "b33ab474bff6e12bd41a21704c5086efed2d0678"
+    },
+    "view": {
+      "repository": "ranvier-org/Ranvier.View",
+      "ref": "main",
+      "revision": "0bcf6c23a5fef09242b36f0a07779df58959f9af"
+    },
+    "css": {
+      "repository": "ranvier-org/Ranvier.Css",
+      "ref": "main",
+      "revision": "4a0b3bdba2993157946cd46ab1dbe918943a044c"
+    },
+    "anime": {
+      "repository": "ranvier-org/Ranvier.Anime",
+      "ref": "main",
+      "revision": "8c398953f34112fe1c567092058117abc5ff058f"
     },
     "keyboard": {
       "repository": "ranvier-org/Ranvier.Keyboard",
       "ref": "main",
-      "revision": "7ff8427f58d289bccb8d335dc36a3d5e48cc0189"
+      "revision": "e7aa27108a6b1c02facd91440d439340c0d60e97"
     },
     "webcore": {
       "repository": "ranvier-org/Ranvier.WebCore",
       "ref": "main",
       "revision": "cf1c3770f64c3fd18d498982e6a0d4e459ec8cfa"
     },
+    "terminal": {
+      "repository": "ranvier-org/Ranvier.Terminal",
+      "ref": "main",
+      "revision": "9c1e4d942ee7064534c9be8cf72f5c58cbf0d4e2"
+    },
+    "wgpu": {
+      "repository": "ranvier-org/Ranvier.Wgpu",
+      "ref": "main",
+      "revision": "9983185b1a72b78c5c1b1f6759ec9725d0f53f48"
+    },
+    "d5": {
+      "repository": "ranvier-org/Ranvier.D5",
+      "ref": "main",
+      "revision": "6429374a03e3f19dbaa5a165af317674b433d412"
+    },
+    "examples": {
+      "repository": "ranvier-org/Ranvier.Examples",
+      "ref": "main",
+      "revision": "5f1c2bf23fcb9bb2184a11afa97eef3e3f480166"
+    },
+    "fsharp": {
+      "repository": "ranvier-org/ranvier-fsharp",
+      "ref": "main",
+      "revision": "1fe98c1753fe94cc01363d978b06bbaae1e4be32"
+    },
+    "rocq": {
+      "repository": "ranvier-org/FSharp.Data.Rocq",
+      "ref": "main",
+      "revision": "0e323a87565d8d9a6980821ec15919a695ac5eb4"
+    },
     "core-performance": {
       "repository": "ranvier-org/Ranvier",
       "ref": "perf-data",
-      "revision": "36a23a83055007b7b75a2bc9e76fb01d7b3646e2"
+      "revision": "36cd044ab0c8a12aa5990ecc899a981743ff1cb9"
     }
   }
 }

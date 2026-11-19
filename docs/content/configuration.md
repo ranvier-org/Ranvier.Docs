@@ -22,6 +22,7 @@ Each registration supports:
 - **`repository`**: required GitHub `owner/name`, without a URL prefix or `.git` suffix. Used for acquisition, provenance and edit links.
 - **`ref`**: Git ref to resolve on an intentional lock refresh; defaults to `HEAD`. Prefer an explicit branch, tag or reviewed commit.
 - **`route`**: unique first public URL segment, defaulting to `id`. Routes are lowercase letters, digits and hyphens, beginning with a letter. Nested or empty route prefixes are not supported by this registry contract.
+- **`category`**: optional top-level navigation category (for example `"Core & Reactive"` or `"Views & Styling"`), grouping libraries into described navbar dropdowns and landing-page sections.
 - **`title`**: fallback display title. A repository manifest's title takes precedence.
 - **`description`**: fallback description used by the central source metadata.
 - **`local`**: optional checkout path, resolved relative to the central host. Used by `--local`; does not affect normal acquired builds.
@@ -40,7 +41,13 @@ All options are optional. An absent file is equivalent to using defaults.
 - **`content`**: repository-relative content directory, default `docs/content` or the registration's fallback.
 - **`static`**: repository-relative static asset directory, default `docs/static`. Use `false` to disable it. A missing default directory is allowed.
 - **`index`**: landing page relative to `content`. The default is `index.md`, then `README.md`, then the first discovered page. Explicitly choose it for stable navigation.
-- **`sections`**: ordered array of navigation groups; each has `title` and `pages`. Without it, one section lists all discovered pages in deterministic path order.
+- **`sections`**: ordered array of navigation groups; each has `title` and `items` (or `pages`). Supports nested `{ "section", "items" }`, `{ "group", "dir"|"items" }`, `{ "dir" }`, `{ "link", "title" }`, and `badge` (`new`, `updated`, `experimental`, `beta`, `deprecated`). Without it, subdirectories and front-matter `order` infer a structured hierarchy automatically.
+- **`badge`**: optional release-status badge (`new`, `updated`, `experimental`, `beta`, `deprecated`) shown on the central landing page card.
+- **`styles`**: array of repository-relative `.css` files layered onto that repository's collection (`__BASE__` expands to `/<baseUrl>/<route>/`, `__SITE_BASE__` to `/<baseUrl>/`).
+- **`scripts`**: array of static/content-relative script paths or `{ "src", "defer"?: boolean, "module"?: boolean }` objects added to that collection's pages.
+- **`apiReference`**: optional `{ "title"?: string, "projects"?: string[], "assemblies"?: string[], "exclude"?: string[] }` contributing compiled assemblies and XML docs to the shared `/reference/` API reference.
+- **`proofsUrl`**: optional URL to formal verification proofs (such as Navigator Rocq proofs), automatically surfaced in the sidebar if not already linked.
+- **`ogCards` / `defaultOgImage`**: optional OpenGraph card mappings per path segment.
 - **`unlisted`**: array of existing page paths intentionally omitted from the menu. Pages remain rendered, linkable and searchable. Defaults to empty.
 - **`exclude`**: array of patterns matching content-relative file paths. `*` matches characters within a path segment; `**` matches across segments. Matching files are not staged or rendered. Defaults to empty. For example, `research/**` excludes that subtree.
 - **`examplesProject`**: repository-relative `.fsproj` containing additional sample modules. The generated shared example project references it alongside the baseline preset. See [Runnable examples](examples.md).

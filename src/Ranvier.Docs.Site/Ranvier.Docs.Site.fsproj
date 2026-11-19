@@ -1,12 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
-  <ItemGroup><Compile Include="Directives.fs" /><Compile Include="Site.fs" /></ItemGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Directives.fs" />
+    <Compile Include="BrandTheme.fs" />
+    <Compile Include="SiteModel.fs" />
+    <Compile Include="Site.fs" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../.generated/Examples.fsproj" ReferenceOutputAssembly="false" Condition="Exists('../../.generated/Examples.fsproj')" />
+    <ProjectReference Include="../../.generated/api-reference/ApiReference.fsproj" ReferenceOutputAssembly="false" Condition="Exists('../../.generated/api-reference/ApiReference.fsproj')" />
     <ProjectReference Include="../Nacara.Plugin.Ranvier/Nacara.Plugin.Ranvier.fsproj" />
     <ProjectReference Include="../Nacara.Plugin.Ranvier.Theme/Nacara.Plugin.Ranvier.Theme.fsproj" />
     <PackageReference Include="Nacara.Core" Version="2.0.0-beta.6" />
     <PackageReference Include="Partas.Nacara.Plugins.Directives" Version="0.1.0" />
+    <PackageReference Include="Partas.Nacara.Plugins.AgentFriendly" Version="0.1.0" />
+    <PackageReference Include="Partas.Nacara.Plugins.OgImage" Version="0.1.0" />
+    <PackageReference Include="Nacara.Plugin.FSharpApi" Version="1.0.0-beta.5" NoWarn="NU1608" />
     <PackageReference Include="Nacara.Plugin.Markdown" Version="1.0.0-beta.2" />
     <PackageReference Include="Nacara.Plugin.Literate" Version="1.0.0-beta.1" />
     <PackageReference Include="Nacara.Plugin.Highlight.TreeSitter" Version="1.0.0-beta.3" />

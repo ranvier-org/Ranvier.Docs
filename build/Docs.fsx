@@ -95,21 +95,60 @@ let buildPreparedAssets () =
         if not (bundle.GetProperty("cached").GetBoolean()) then
             let project = text "projectRoot" bundle
             let vars = bundle.GetProperty("env").EnumerateObject() |> Seq.map (fun property -> property.Name, property.Value.GetString()) |> Seq.toList
-            let server = if Path.GetFileName(project) = "Ranvier.Motion" then "Server/ServerChecks.fsproj" else "Server/Server.fsproj"
-            executeStage (stage $"build browser example {Path.GetFileName(project)}" {
-                workingDir project
-                envVars vars
-                run (fun _ -> npm ["ci"; "--no-audit"; "--no-fund"])
-                run (dotnet ["build"; server; "-c"; "Release"; "-m:1"; "-p:BuildInParallel=false"])
-                run (dotnet ["run"; "--project"; server; "-c"; "Release"; "--no-build"; "--"; "--write-pages"])
-                // Run from this repository so its tool manifest supplies Fickl; the example's checkout carries a manifest of its own.
-                stage "compile the client with this repository's Fickl" {
-                    workingDir root
+            let buildConfig =
+                match bundle.TryGetProperty("build") with
+                | true, value when value.ValueKind = JsonValueKind.Object -> Some value
+                | _ -> None
+            let buildKind =
+                buildConfig
+                |> Option.bind (fun cfg ->
+                    match cfg.TryGetProperty("kind") with
+                    | true, v when v.ValueKind = JsonValueKind.String -> Some(v.GetString())
+                    | _ -> None)
+                |> Option.defaultValue "fickl-vite"
+            if buildKind = "npm" then
+                let scriptName =
+                    buildConfig
+                    |> Option.bind (fun cfg ->
+                        match cfg.TryGetProperty("script") with
+                        | true, v when v.ValueKind = JsonValueKind.String -> Some(v.GetString())
+                        | _ -> None)
+                    |> Option.defaultValue "build"
+                executeStage (stage $"build browser example {Path.GetFileName(project)}" {
+                    workingDir project
                     envVars vars
-                    run (dotnet ["fickl"; "Client.fsproj"; "--cwd"; project; "--outDir"; "generated"; "--configuration"; "Release"])
-                }
-                run (node [Path.Combine(project, "node_modules/vite/bin/vite.js"); "build"])
-            })
+                    run (fun _ -> npm ["ci"; "--no-audit"; "--no-fund"])
+                    run (fun _ -> npm ["run"; scriptName])
+                })
+            else
+                let server =
+                    buildConfig
+                    |> Option.bind (fun cfg ->
+                        match cfg.TryGetProperty("serverProject") with
+                        | true, v when v.ValueKind = JsonValueKind.String -> Some(v.GetString())
+                        | _ -> None)
+                    |> Option.defaultWith (fun () -> if Path.GetFileName(project) = "Ranvier.Motion" then "Server/ServerChecks.fsproj" else "Server/Server.fsproj")
+                let client =
+                    buildConfig
+                    |> Option.bind (fun cfg ->
+                        match cfg.TryGetProperty("clientProject") with
+                        | true, v when v.ValueKind = JsonValueKind.String -> Some(v.GetString())
+                        | _ -> None)
+                    |> Option.defaultValue "Client.fsproj"
+                executeStage (stage $"build browser example {Path.GetFileName(project)}" {
+                    workingDir project
+                    envVars vars
+                    run (fun _ -> npm ["ci"; "--no-audit"; "--no-fund"])
+                    run (dotnet ["build"; server; "-c"; "Release"; "-m:1"; "-p:BuildInParallel=false"])
+                    run (dotnet ["run"; "--project"; server; "-c"; "Release"; "--no-build"; "--"; "--write-pages"])
+                    // Run from this repository so its tool manifest supplies Fickl; the example's checkout carries a manifest of its own.
+                    stage "compile the client with this repository's Fickl" {
+                        workingDir root
+                        envVars vars
+                        run (dotnet ["fickl"; client; "--cwd"; project; "--outDir"; "generated"; "--configuration"; "Release"])
+                    }
+                    run (node [Path.Combine(project, "node_modules/vite/bin/vite.js"); "build"])
+                })
     let performance = plan.RootElement.GetProperty("performance")
     if performance.ValueKind <> JsonValueKind.Null && not (performance.GetProperty("cached").GetBoolean()) then
         executeStage (stage "generate recorded performance charts" {
@@ -128,7 +167,7 @@ let prepare arguments = stage "prepare source content and runnable assets" {
 let compile = stage "compile documentation host" {
     workingDir root
     envVars environment
-    run (dotnet ["build"; "src/Ranvier.Docs.Site/Ranvier.Docs.Site.fsproj"; "-c"; "Release"; "--nologo"])
+    run (dotnet ["build"; "src/Ranvier.Docs.Site/Ranvier.Docs.Site.fsproj"; "-c"; "Release"; "-m:1"; "--nologo"])
 }
 let render = stage "render shared documentation" {
     workingDir root
@@ -137,7 +176,7 @@ let render = stage "render shared documentation" {
 }
 let check = stage "validate published links, anchors and assets" { workingDir root; envVars environment; run (node ["scripts/check-output.mjs"]) }
 let serve = stage "serve documentation" { workingDir root; envVars environment; run (node ["scripts/serve.mjs"]) }
-let buildSolution = stage "compile verification projects" { workingDir root; envVars environment; run (dotnet ["build"; "Ranvier.Docs.slnx"; "-c"; "Release"; "--nologo"]) }
+let buildSolution = stage "compile verification projects" { workingDir root; envVars environment; run (dotnet ["build"; "Ranvier.Docs.slnx"; "-c"; "Release"; "-m:1"; "--nologo"]) }
 
 let installBrowser = stage "prepare browser verification runtime" {
     workingDir root

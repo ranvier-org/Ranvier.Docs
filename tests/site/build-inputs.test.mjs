@@ -71,3 +71,30 @@ test('preview watches library APIs, central infrastructure and arbitrary manifes
   assert.ok(folders.includes(browserProject));
   assert.ok(folders.includes(dataset));
 });
+
+test('build inputs isolate apiReference projects into ApiReference.fsproj while keeping Examples.fsproj pure for Fable', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'ranvier-api-inputs-'));
+  try {
+    await mkdir(path.join(root, '.generated'));
+    const metadata = {
+      sources: [
+        { id: 'core', root: path.join(root, 'core'), apiReference: { projects: [path.join(root, 'core/src/Ranvier.Query/Ranvier.Query.fsproj')], assemblies: ['Ranvier', 'Ranvier.Query'] } },
+        { id: 'view', root: path.join(root, 'view') },
+        { id: 'anime', root: path.join(root, 'anime') },
+        { id: 'css', root: path.join(root, 'css') },
+        { id: 'keyboard', root: path.join(root, 'keyboard'), apiReference: { projects: [path.join(root, 'keyboard/src/Ranvier.Keyboard/Ranvier.Keyboard.fsproj')], assemblies: ['Ranvier.Keyboard'] } }
+      ]
+    };
+    await writeBuildInputs(metadata, root);
+    const examplesProject = await readFile(path.join(root, '.generated/Examples.fsproj'), 'utf8');
+    const apiProject = await readFile(path.join(root, '.generated/api-reference/ApiReference.fsproj'), 'utf8');
+    const helper = await readFile(path.join(root, '.generated/content/literate.fsx'), 'utf8');
+    assert.ok(!examplesProject.includes('Ranvier.Query.fsproj'));
+    assert.ok(apiProject.includes(path.join(root, 'core/src/Ranvier.Query/Ranvier.Query.fsproj')));
+    assert.ok(apiProject.includes(path.join(root, 'keyboard/src/Ranvier.Keyboard/Ranvier.Keyboard.fsproj')));
+    assert.match(helper, /Ranvier\.Query\.dll/);
+    assert.match(helper, /Ranvier\.Keyboard\.dll/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

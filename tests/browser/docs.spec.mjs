@@ -164,3 +164,46 @@ test('the real standalone View demos load their rendered pages and browser modul
   }
   expect(errors).toEqual([]);
 });
+
+test('the shared splash landing page, categorized navbar, hierarchical menus, API reference and llms.txt work across repositories', async ({ page, request, baseURL }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('');
+  await expect(page.locator('.nacara-layout--splash')).toBeVisible();
+  await expect(page.locator('.rv-hero__title')).toContainText('ranvier');
+  await expect(page.locator('.rv-cards .rv-card').first()).toBeVisible();
+  await expect(page.locator('.nacara-navbar [data-nacara-dropdown]').first()).toBeVisible();
+
+  await page.goto('core/guide/aggregates/');
+  await expect(page.locator('main h1')).toHaveText('Aggregates');
+  await expect(page.locator('.nacara-sidebar details').first()).toBeAttached();
+  await expect(page.locator('.nacara-edit-link')).toHaveAttribute('href', /github\.com\/ranvier-org\/Ranvier\/edit\/master\//);
+
+  await page.goto('view/view/getting-started/');
+  const firstSidebarLink = await page.locator('.nacara-sidebar > .nacara-sidebar__list a').first().textContent();
+  expect(firstSidebarLink).not.toContain('RAN001');
+  await expect(page.locator('.nacara-edit-link')).not.toHaveAttribute('href', /\/edit\/HEAD\//);
+
+  const contour = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--rv-contour').trim());
+  expect(contour.length).toBeGreaterThan(0);
+
+  const refResponse = await page.goto('reference/');
+  expect(refResponse.status()).toBe(200);
+  await expect(page.locator('main')).toContainText('Ranvier');
+
+  const termResponse = await page.goto('terminal/');
+  expect(termResponse.status()).toBe(200);
+  await expect(page.locator('.terminal-hero')).toBeVisible();
+
+  for (const route of ['barewire/', 'wgpu/', 'd5/', 'examples/walkthrough/', 'fsharp/', 'rocq/']) {
+    const res = await page.goto(route);
+    expect(res.status(), `expected ${route} to return 200`).toBe(200);
+  }
+
+  const llms = await request.get(new URL('llms.txt', baseURL).href);
+  expect(llms.status()).toBe(200);
+  expect(await llms.text()).toContain('Ranvier');
+  expect(errors).toEqual([]);
+});

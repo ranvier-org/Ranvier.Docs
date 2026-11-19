@@ -2,6 +2,7 @@
   "$schema": "../schemas/repository.schema.json",
   "version": 1,
   "title": "Documentation authoring",
+  "description": "Shared documentation host, repository manifest contract, Ranvier brand theme, and runnable example pipeline.",
   "index": "index.md",
   "sections": [
     { "title": "Start here", "pages": ["index.md", "quick-start.md", "architecture.md"] },
