@@ -128,14 +128,7 @@ let explicitDisplayTitle (sources: JsonElement list) (page: Page) : Page =
     |> Option.defaultValue page
 
 let resolveCollectionDocPage (frontMatter: DocFrontMatter) (resolvedTitle: string) (renderedHtml: string) : DocPage =
-    let normalizedFrontMatter, hideOverviewToc =
-        match frontMatter.Layout with
-        | Some "bare" -> { frontMatter with Title = resolvedTitle; Layout = None }, true
-        | _ -> { frontMatter with Title = resolvedTitle }, false
-
-    let baseDoc =
-        DocFrontMatter.toDocPage normalizedFrontMatter
-        |> fun doc -> if hideOverviewToc then DocPage.withoutToc doc else doc
+    let baseDoc = DocFrontMatter.toDocPage { frontMatter with Title = resolvedTitle }
 
     if baseDoc.ShowTitle && not (String.IsNullOrEmpty renderedHtml) && leadingH1Pattern.IsMatch renderedHtml then
         { baseDoc with ShowTitle = false }
