@@ -19,8 +19,8 @@
     <ProjectReference Remove="@(ProjectReference->WithMetadataValue('Filename', 'Ranvier.View'))" />
     <ProjectReference Include="$(RanvierViewRoot)/src/Ranvier.View/Ranvier.View.fsproj" />
   </ItemGroup>
-  <ItemGroup Condition="'@(PackageReference->WithMetadataValue('Identity', 'Ranvier.Css'))' != '' or '@(PackageReference->WithMetadataValue('Identity', 'Ranvier.Css.Traced'))' != '' or '@(ProjectReference->WithMetadataValue('Filename', 'Ranvier.Css'))' != ''">
-    <PackageReference Remove="Ranvier.Css;Ranvier.Css.Traced" />
+  <ItemGroup Condition="'@(PackageReference->WithMetadataValue('Identity', 'Ranvier.Css'))' != '' or '@(PackageReference->WithMetadataValue('Identity', 'Ranvier.Css.Traced'))' != '' or '@(PackageReference->WithMetadataValue('Identity', 'Ranvier.Css.Core'))' != '' or '@(PackageReference->WithMetadataValue('Identity', 'Ranvier.Css.Core.Traced'))' != '' or '@(ProjectReference->WithMetadataValue('Filename', 'Ranvier.Css'))' != ''">
+    <PackageReference Remove="Ranvier.Css;Ranvier.Css.Traced;Ranvier.Css.Core;Ranvier.Css.Core.Traced" />
     <ProjectReference Remove="@(ProjectReference->WithMetadataValue('Filename', 'Ranvier.Css'))" />
     <ProjectReference Include="$(RanvierCssRoot)/src/Ranvier.Css/Ranvier.Css.fsproj" />
   </ItemGroup>
@@ -83,5 +83,15 @@
     <PackageReference Remove="Ranvier.Css.Dom;Ranvier.Css.Dom.Traced" />
     <ProjectReference Remove="@(ProjectReference->WithMetadataValue('Filename', 'Ranvier.Css.Dom'))" />
     <ProjectReference Include="$(RanvierCssRoot)/src/Ranvier.Css.Dom/Ranvier.Css.Dom.fsproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'@(PackageReference->WithMetadataValue('Identity', 'Fable.Ranvier.Css.Dom'))' != '' or '@(PackageReference->WithMetadataValue('Identity', 'Fable.Ranvier.Css.Dom.Traced'))' != '' or '@(ProjectReference->WithMetadataValue('Filename', 'Fable.Ranvier.Css.Dom'))' != ''">
+    <PackageReference Remove="Fable.Ranvier.Css.Dom;Fable.Ranvier.Css.Dom.Traced" />
+    <ProjectReference Remove="@(ProjectReference->WithMetadataValue('Filename', 'Fable.Ranvier.Css.Dom'))" />
+    <ProjectReference Include="$(RanvierCssRoot)/src/Fable.Ranvier.Css.Dom/Fable.Ranvier.Css.Dom.fsproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'@(PackageReference->WithMetadataValue('Identity', 'Fable.Ranvier.View.Anime'))' != '' or '@(PackageReference->WithMetadataValue('Identity', 'Fable.Ranvier.View.Anime.Traced'))' != '' or '@(ProjectReference->WithMetadataValue('Filename', 'Fable.Ranvier.View.Anime'))' != ''">
+    <PackageReference Remove="Fable.Ranvier.View.Anime;Fable.Ranvier.View.Anime.Traced" />
+    <ProjectReference Remove="@(ProjectReference->WithMetadataValue('Filename', 'Fable.Ranvier.View.Anime'))" />
+    <ProjectReference Include="$(RanvierViewRoot)/src/Fable.Ranvier.View.Anime/Fable.Ranvier.View.Anime.fsproj" />
   </ItemGroup>
 </Project>

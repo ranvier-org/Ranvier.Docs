@@ -154,33 +154,40 @@ let tests =
             | NavbarDropdown("Core & Reactive", [ NavbarDescribed("Ranvier", "Fine-grained reactive signals and memos.", "/core/") ]) -> ()
             | other -> failtestf "Expected categorized NavbarDropdown, got %A" other
 
-        testCase "resolveCollectionDocPage normalizes legacy layout: bare to styled sidebar overview and suppresses duplicate H1s" <| fun _ ->
-            let bareOverview : DocFrontMatter =
+        testCase "resolveCollectionDocPage honors toc: false, preserves layout: bare, and suppresses duplicate H1s" <| fun _ ->
+            let overview : DocFrontMatter =
                 { Title = "Ranvier.Keyboard"
                   Description = Some "Keyboard primitives"
                   Order = None
-                  Layout = Some "bare"
+                  Layout = None
                   PageNav = None
                   MenuFilter = None
                   MenuMemory = None
-                  Toc = None
+                  Toc = Some TocOff
                   Main = [] }
+            let resolvedOverview =
+                Ranvier.Docs.SiteModel.resolveCollectionDocPage
+                    overview
+                    "Ranvier.Keyboard"
+                    "<p>Lead copy.</p>"
+            Expect.isTrue resolvedOverview.Styled "Collection overview with toc: false is styled (.nacara-content)."
+            Expect.isTrue resolvedOverview.ShowMenu "Collection overview retains its sidebar menu."
+            Expect.isFalse resolvedOverview.ShowToc "toc: false omits right-hand TOC."
+            Expect.isTrue resolvedOverview.ShowTitle "Page without body <h1> renders shell <h1>."
+
+            let resolvedBodyH1 =
+                Ranvier.Docs.SiteModel.resolveCollectionDocPage
+                    { overview with Toc = None }
+                    "Ranvier.BAREWire"
+                    "<h1 id=\"ranvier-barewire\">Ranvier.BAREWire</h1><p>Lead copy.</p>"
+            Expect.isTrue resolvedBodyH1.Styled "Standard page is styled."
+            Expect.isFalse resolvedBodyH1.ShowTitle "Body starting with <h1> suppresses duplicate shell <h1>."
+
             let resolvedBare =
                 Ranvier.Docs.SiteModel.resolveCollectionDocPage
-                    bareOverview
-                    "Ranvier.Keyboard"
-                    "<h1 id=\"ranvier-keyboard\">Ranvier.Keyboard</h1><p>Lead copy.</p>"
-            Expect.isTrue resolvedBare.Styled "Imported collection overview with layout: bare must remain styled (.nacara-content)."
-            Expect.isTrue resolvedBare.ShowMenu "Imported collection overview must retain its sidebar menu."
-            Expect.isFalse resolvedBare.ShowToc "Imported collection overview with layout: bare omits right-hand TOC."
-            Expect.isFalse resolvedBare.ShowTitle "Body starting with <h1> suppresses duplicate shell <h1>."
-
-            let frontMatterOnlyTitle = { bareOverview with Layout = None }
-            let resolvedNoBodyH1 =
-                Ranvier.Docs.SiteModel.resolveCollectionDocPage
-                    frontMatterOnlyTitle
-                    "Aggregates"
-                    "<p>Keep totals current.</p>"
-            Expect.isTrue resolvedNoBodyH1.Styled "Standard page is styled."
-            Expect.isTrue resolvedNoBodyH1.ShowTitle "Page without body <h1> renders shell <h1>."
+                    { overview with Layout = Some "bare"; Toc = None }
+                    "Canvas"
+                    "<section>Custom canvas</section>"
+            Expect.isFalse resolvedBare.Styled "Explicit layout: bare preserves unstyled canvas semantics."
+            Expect.isFalse resolvedBare.ShowMenu "Explicit layout: bare hides sidebar."
     ]

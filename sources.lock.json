@@ -9,7 +9,7 @@
     "persistence": {
       "repository": "ranvier-org/Ranvier.Persistence",
       "ref": "main",
-      "revision": "6b24622b90dfdb6097ae1b12385492fc4bd50bef"
+      "revision": "a1c00c0b1a38552b30868eb62cc97f8430dc5fd8"
     },
     "barewire": {
       "repository": "ranvier-org/Ranvier.BAREWire",
@@ -19,22 +19,22 @@
     "view": {
       "repository": "ranvier-org/Ranvier.View",
       "ref": "main",
-      "revision": "0bcf6c23a5fef09242b36f0a07779df58959f9af"
+      "revision": "f13d925b1b0f80a0a37e1bf7a98cd6e504dd539a"
     },
     "css": {
       "repository": "ranvier-org/Ranvier.Css",
       "ref": "main",
-      "revision": "4a0b3bdba2993157946cd46ab1dbe918943a044c"
+      "revision": "6ae2a3b2ccd93e988f8eb1ab41abbdd49db14e14"
     },
     "anime": {
       "repository": "ranvier-org/Ranvier.Anime",
       "ref": "main",
-      "revision": "8c398953f34112fe1c567092058117abc5ff058f"
+      "revision": "efb73d7a1f3819a6209d740b225884244082f1ae"
     },
     "keyboard": {
       "repository": "ranvier-org/Ranvier.Keyboard",
       "ref": "main",
-      "revision": "e7aa27108a6b1c02facd91440d439340c0d60e97"
+      "revision": "ea806e8a583744c1d14a67cbe6db9d2c5274809a"
     },
     "webcore": {
       "repository": "ranvier-org/Ranvier.WebCore",
