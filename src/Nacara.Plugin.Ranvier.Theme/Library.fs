@@ -9,7 +9,7 @@ module Tokens =
     /// <summary>Default typography declarations in definition order.</summary>
     let tokenDeclarations: ResizeArray<Declaration> = ResizeArray()
     /// <summary>Records the variable's default declaration and returns the variable.</summary>
-    let inline (==>) (a: CssValue.Variable<#Generated.CssGrammar.IValue>) b: CssValue.Variable<#Generated.CssGrammar.IValue> = CssValue.Variable.declaration a b |> tokenDeclarations.Add; a
+    let inline (==>) (a: CssValue.Variable<#CssGrammar.IValue>) b: CssValue.Variable<#CssGrammar.IValue> = CssValue.Variable.declaration a b |> tokenDeclarations.Add; a
     /// <summary>The proportional font stack used by body text.</summary>
     let fontSans = Css.variable "--nacara-font-sans" ==> CssValue.Font.Family.create [
         CssValue.Font.Family.uiSansSerif :> FamilyEntry
