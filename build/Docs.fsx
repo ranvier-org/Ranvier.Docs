@@ -272,6 +272,7 @@ let definition = Command.root {
     }
     command "sources" {
         description "Fetch locked sources or deliberately refresh selected revisions"
+        bootstrap
         input {
             let! registry = Options.registry
             and! refresh = Options.refresh
