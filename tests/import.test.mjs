@@ -223,3 +223,127 @@ test('locked dataset inputs have provenance without becoming documentation colle
   assert.equal(site.datasets[0].root, f.checkout('history'));
   await assert.rejects(access(path.join(f.root, '.generated/content/history/index.md')));
 });
+
+test('literate F# front matter and default directory inference order pages and nested groups cleanly', async t => {
+  const f = await fixture(t, ['core']);
+  await f.put('core', 'docs/content/z-overview.md', '---\ntitle: Overview\norder: 1\n---\n# Overview\n');
+  await f.put('core', 'docs/content/a-later.md', '---\ntitle: Later\norder: 10\n---\n# Later\n');
+  await f.put('core', 'docs/content/guide/index.md', '---\ntitle: Guide Home\norder: 99\n---\n# Guide Home\n');
+  await f.put('core', 'docs/content/guide/aggregates.fsx', '(**\n---\ntitle: Aggregates\norder: 6\n---\n*)\nlet x = 1\n');
+  await f.put('core', 'docs/content/guide/signals.fsx', '(**\n---\ntitle: Signals\norder: 2\n---\n*)\nlet s = 2\n');
+  await f.put('core', 'docs/content/analyzers/ran001.md', '---\ntitle: RAN001\norder: 1\n---\n# RAN001\n');
+  await f.put('core', 'docs/content/superpowers/plans/secret.md', '# Internal plan\n');
+  await f.put('core', 'docs/content/.ai/notes.md', '# AI note\n');
+  const site = await f.prepare();
+  const section = site.sources[0].sections[0];
+  assert.deepEqual(section.pages.map(p => p.path), [
+    'index.md',
+    'z-overview.md',
+    'a-later.md',
+    'analyzers/ran001.md',
+    'guide/index.md',
+    'guide/signals.fsx',
+    'guide/aggregates.fsx'
+  ]);
+  assert.equal(section.pages.find(p => p.path === 'guide/aggregates.fsx').title, 'Aggregates');
+  const guideGroup = section.items.find(item => item.kind === 'group' && item.path === 'guide/index.md');
+  assert.ok(guideGroup, 'subdirectory with index.md becomes a MenuGroup');
+  assert.equal(guideGroup.items.find(p => p.path === 'guide/aggregates.fsx').explicitTitle, false);
+  assert.deepEqual(guideGroup.items.map(i => i.path), ['guide/signals.fsx', 'guide/aggregates.fsx']);
+  const analyzerSection = section.items.find(item => item.kind === 'section' && item.title === 'Analyzers');
+  assert.ok(analyzerSection, 'subdirectory without index.md becomes a MenuSection');
+  await assert.rejects(access(path.join(f.root, '.generated/content/core/superpowers/plans/secret.md')));
+});
+
+test('rich manifests support nested sections, overview groups, directory globs, badges, links, styles and apiReference', async t => {
+  const f = await fixture(t, ['core']);
+  await f.put('core', 'docs/theme/custom.css', '.demo { background: url("__BASE__logo.svg"); }');
+  await f.put('core', 'docs/static/widget.js', 'console.log("ok");');
+  await f.put('core', 'docs/content/guide/intro.md', '---\ntitle: Intro\norder: 1\n---\n');
+  await f.put('core', 'docs/content/guide/deep.md', '---\ntitle: Deep\norder: 2\n---\n');
+  await f.put('core', 'docs/content/analyzers/index.md', '---\ntitle: Analyzers\n---\n');
+  await f.put('core', 'docs/content/analyzers/ran002.md', '---\ntitle: RAN002\norder: 2\n---\n');
+  await f.put('core', 'docs/content/analyzers/ran001.md', '---\ntitle: RAN001\norder: 1\n---\n');
+  await f.put('core', 'docs/ranvier-docs.json', JSON.stringify({
+    version: 1,
+    unlisted: ['index.md'],
+    styles: ['docs/theme/custom.css'],
+    scripts: [{ src: 'widget.js', defer: true }],
+    proofsUrl: 'https://ranvier-org.github.io/core/proofs/',
+    apiReference: { title: 'API Reference', assemblies: ['Ranvier'] },
+    sections: [
+      {
+        title: 'Documentation',
+        items: [
+          {
+            section: 'Core Guide',
+            items: [
+              { path: 'guide/intro.md', title: 'Start Here', badge: 'updated' },
+              'guide/deep.md'
+            ]
+          },
+          {
+            group: 'analyzers/index.md',
+            badge: 'new',
+            dir: 'analyzers'
+          },
+          {
+            link: 'https://ranvier-org.github.io/core/proofs/',
+            title: 'Formal Proofs',
+            badge: 'experimental'
+          }
+        ]
+      }
+    ]
+  }));
+  f.registry.sources[0].category = 'Core';
+  f.registry.sources[0].ref = 'HEAD';
+  await writeFile(path.join(f.root, 'sources.json'), JSON.stringify(f.registry));
+  const site = await f.prepare();
+  const source = site.sources[0];
+  assert.equal(source.category, 'Core');
+  assert.equal(source.editUrl, 'https://github.com/ranvier-org/core/edit/main/docs/content/');
+  assert.equal(source.styles.length, 1);
+  assert.deepEqual(source.scripts, [{ src: 'widget.js', defer: true, module: false }]);
+  assert.equal(source.apiReference.assemblies[0], 'Ranvier');
+  const items = source.sections[0].items;
+  assert.equal(items[0].kind, 'section');
+  assert.equal(items[0].items[0].title, 'Start Here');
+  assert.equal(items[0].items[0].explicitTitle, true);
+  assert.equal(items[0].items[0].badge, 'updated');
+  assert.equal(items[1].kind, 'group');
+  assert.deepEqual(items[1].items.map(i => i.path), ['analyzers/ran001.md', 'analyzers/ran002.md']);
+  assert.equal(items[2].kind, 'link');
+  assert.equal(items[2].badge, 'experimental');
+});
+
+test('full standalone GitHub Pages URLs, HTML repo links and directive hrefs rewrite while preserving external URLs', async t => {
+  const f = await fixture(t, ['core', 'view']);
+  f.registry.sources[0].repository = 'ranvier-org/Ranvier';
+  f.registry.sources[1].repository = 'ranvier-org/Ranvier.View';
+  await writeFile(path.join(f.root, 'sources.json'), JSON.stringify(f.registry));
+  await f.put('view', 'docs/content/view/getting-started.md', '# Getting started\n## Try a component\n');
+  const body = [
+    '# Home',
+    '[Live](https://ranvier-org.github.io/Ranvier.View/view/getting-started/#try-a-component)',
+    '[Proofs](https://ranvier-org.github.io/Ranvier.View/proofs/)',
+    '[External app](https://ranvier-org.github.io/Ranvier.View/example/)',
+    '<a class="rv-card" href="repo:view/view/getting-started.md#try-a-component">Try</a>',
+    '<a class="rv-card" href="https://ranvier-org.github.io/Ranvier.View/">Views</a>',
+    '::::cards',
+    ':::card title="View Guide" href="repo:view/view/getting-started.md#try-a-component"',
+    'Body copy.',
+    ':::',
+    '::::',
+    ''
+  ].join('\n');
+  await f.put('core', 'docs/content/index.md', body);
+  await f.prepare();
+  const staged = await readFile(path.join(f.root, '.generated/content/core/index.md'), 'utf8');
+  assert.match(staged, /\[Live\]\(\.\.\/view\/view\/getting-started\.md#try-a-component\)/);
+  assert.match(staged, /\[Proofs\]\(https:\/\/ranvier-org\.github\.io\/Ranvier\.View\/proofs\/\)/);
+  assert.match(staged, /\[External app\]\(https:\/\/ranvier-org\.github\.io\/Ranvier\.View\/example\/\)/);
+  assert.match(staged, /<a class="rv-card" href="\/docs\/view\/view\/getting-started\/#try-a-component">Try<\/a>/);
+  assert.match(staged, /<a class="rv-card" href="\/docs\/view\/">Views<\/a>/);
+  assert.match(staged, /:::card title="View Guide" href="\/docs\/view\/view\/getting-started\/#try-a-component"/);
+});

@@ -12,52 +12,84 @@ The host registry's source order controls the shared library navigation. Each li
 
 ## Default discovery
 
-Without explicit `sections`, all discovered Markdown and `.fsx` pages are listed in one section. The default ordering is deterministic by path. A page's menu title comes from front-matter `title`, then its first level-one heading, then its filename with hyphens replaced by spaces.
+Without explicit `sections`, discovered Markdown (`.md`) and literate F# (`.fsx`) pages are organised automatically by directory hierarchy and front-matter `order`:
 
-This is enough to hook up an existing repository. Use an explicit menu when the documentation has a teaching order or multiple kinds of material; filename prefixes should not be required just to place a tutorial before reference material.
+- Root pages appear first (`index.md` / `README.md` at the top, then numeric `order` ascending, then path).
+- Subdirectories containing an `index.md` become clickable overview groups (`MenuGroup`) whose children are ordered by `order` ascending then path.
+- Subdirectories without an `index.md` become collapsible subsections (`MenuSection`).
+- Internal tooling folders (`.ai`, `.agents`, `.claude`, `.codex`, `.nacara`, `superpowers`) are excluded automatically.
+- Page titles resolve from YAML front matter (including `(** --- ... --- *)` in `.fsx` files), then the first level-one heading, then the filename.
 
-## Define custom sections
+## Define hierarchical sections, groups, badges and links
 
 ```json
 {
   "version": 1,
   "title": "Views and motion",
   "index": "index.md",
+  "unlisted": ["index.md"],
   "sections": [
     {
-      "title": "Learn the renderer",
-      "pages": ["index.md", "view/getting-started.md", "view/components.md"]
-    },
-    {
-      "title": "Motion",
-      "pages": [
-        { "path": "view/motion.md", "title": "Animation overview" },
-        "view/motion-reactive.md"
+      "title": "Documentation",
+      "items": [
+        { "dir": "guide" },
+        {
+          "section": "Views & motion",
+          "items": [
+            { "path": "view/getting-started.md", "title": "Start here" },
+            { "path": "view/motion.md", "badge": "updated" }
+          ]
+        },
+        {
+          "group": "analyzers/index.md",
+          "badge": "new",
+          "dir": "analyzers"
+        },
+        {
+          "link": "https://ranvier-org.github.io/Ranvier.View/proofs/",
+          "title": "Formal proofs",
+          "badge": "experimental"
+        }
       ]
-    },
-    {
-      "title": "Server rendering",
-      "pages": ["server/index.md", "server/rendering.md", "server/hydration.md"]
     }
   ]
 }
 ```
 
-This example illustrates the format; a real explicit menu must also list all the other discovered pages in that source, or declare them `unlisted`. Section and page order are the array order. Sections are flat groups in this contract. To express another conceptual level, use another named section or a landing page with links; arbitrary recursively nested section objects are not supported.
+Each section accepts `items` (or `pages` for simple 1-level lists). Supported item shapes:
 
-Changing a section title or menu label does not rename files. Changing a page path changes its source identity and can affect incoming links. Prefer stable descriptive paths, even when reorganising the sidebar.
+- `"path/to/page.md"` or `{ "path": "...", "title"?: "...", "badge"?: "new"|"updated"|"experimental"|"beta"|"deprecated" }`
+- `{ "section": "Subheading", "items": [...] }` — collapsible nested subsection at any depth
+- `{ "group": "folder/index.md", "title"?: "...", "badge"?: "...", "items"?: [...], "dir"?: "folder" }` — overview page with collapsible children
+- `{ "dir": "folder" }` — expands non-unlisted pages and subdirectories in `folder/` ordered by `index.md`, `order`, and path
+- `{ "link": "https://...", "title": "...", "badge"?: "..." }` — external or reference link
 
-## Content layout directives
+An explicit menu must cover every discovered page unless it is listed in `unlisted`.
 
-The shared Markdown pipeline retains Nacara's built-in callout, tab, step, details, preview and file-tree directives. It also registers the core documentation's existing `center` container, rendered with a native Ranvier server view. This centres the container's content, including a table as a whole, without requiring Partas.Nacara.Theme:
+## Content layout & Ranvier domain directives
+
+Alongside Nacara's built-in callout, tab, step, details, preview and file-tree directives, the shared host registers native Ranvier server-rendered directives available to every repository:
 
 ````markdown
 :::center
-Centred content.
+Centred table or figure.
 :::
+
+::::states
+:::state kind="pending" label="Pending" size="sm"
+:::
+:::state kind="recovered" label="Recovered"
+:::
+::::
+
+::::cards
+:::card title="Reactive Signals" href='repo:core/guide/signals.fsx' badge="Updated"
+Fine-grained reactive state and derived memos.
+:::
+::::
 ````
 
-Use headings and section configuration for information structure; use a directive only for a local presentation need. Unknown directives produce a build warning so authors can distinguish an unsupported layout from ordinary Markdown.
+`href` attributes on `:::card` and raw HTML `<a>` elements support `repo:<id>/<path>#anchor` cross-repository links with full build-time target and heading validation.
 
 ## Landing pages
 

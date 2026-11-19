@@ -2,11 +2,71 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Repository documentation configuration",
   "type": "object",
+  "$defs": {
+    "badge": {
+      "enum": ["new", "updated", "experimental", "beta", "deprecated"]
+    },
+    "menuItem": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        {
+          "type": "object",
+          "required": ["path"],
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "title": { "type": "string", "minLength": 1 },
+            "badge": { "$ref": "#/$defs/badge" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["section", "items"],
+          "properties": {
+            "section": { "type": "string", "minLength": 1 },
+            "items": { "type": "array", "items": { "$ref": "#/$defs/menuItem" } }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["group"],
+          "properties": {
+            "group": { "type": "string", "minLength": 1 },
+            "title": { "type": "string", "minLength": 1 },
+            "badge": { "$ref": "#/$defs/badge" },
+            "dir": { "type": "string", "minLength": 1 },
+            "items": { "type": "array", "items": { "$ref": "#/$defs/menuItem" } }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["dir"],
+          "properties": {
+            "dir": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["link", "title"],
+          "properties": {
+            "link": { "type": "string", "minLength": 1 },
+            "title": { "type": "string", "minLength": 1 },
+            "badge": { "$ref": "#/$defs/badge" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
   "properties": {
     "$schema": { "type": "string" },
     "version": { "const": 1 },
     "title": { "type": "string" },
     "description": { "type": "string" },
+    "badge": { "$ref": "#/$defs/badge" },
     "content": { "type": "string", "minLength": 1 },
     "static": { "oneOf": [{ "type": "string", "minLength": 1 }, { "const": false }] },
     "index": { "type": "string", "minLength": 1 },
@@ -15,33 +75,104 @@
     "sections": {
       "type": "array",
       "items": {
-        "type": "object", "required": ["title", "pages"],
+        "type": "object",
+        "required": ["title"],
+        "oneOf": [
+          { "required": ["pages"] },
+          { "required": ["items"] }
+        ],
         "properties": {
           "title": { "type": "string", "minLength": 1 },
-          "pages": {
-            "type": "array", "items": {
-              "oneOf": [
-                { "type": "string", "minLength": 1 },
-                { "type": "object", "required": ["path"], "properties": {
-                  "path": { "type": "string", "minLength": 1 }, "title": { "type": "string" }
-                }, "additionalProperties": false }
-              ]
-            }
-          }
+          "pages": { "type": "array", "items": { "$ref": "#/$defs/menuItem" } },
+          "items": { "type": "array", "items": { "$ref": "#/$defs/menuItem" } }
         },
         "additionalProperties": false
       }
     },
-    "examplesProject": { "type": "string", "pattern": "\\.fsproj$" },
-    "packages": { "type": "array", "items": {
-      "type": "array", "prefixItems": [{ "type": "string", "minLength": 1 }, { "type": "string", "minLength": 1 }],
-      "minItems": 2, "maxItems": 2
-    } },
-    "browserBundles": { "type": "array", "items": {
-      "type": "object", "required": ["path", "route"],
-      "properties": { "path": { "type": "string", "minLength": 1 }, "route": { "type": "string", "minLength": 1 } },
+    "styles": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "scripts": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "type": "string", "minLength": 1 },
+          {
+            "type": "object",
+            "required": ["src"],
+            "properties": {
+              "src": { "type": "string", "minLength": 1 },
+              "defer": { "type": "boolean" },
+              "module": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "proofsUrl": { "type": "string", "minLength": 1 },
+    "apiReference": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "projects": { "type": "array", "items": { "type": "string", "pattern": "\\.(fsproj|csproj)$" } },
+        "assemblies": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "exclude": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      },
       "additionalProperties": false
-    } }
+    },
+    "ogCards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["segment", "image", "alt"],
+        "properties": {
+          "segment": { "type": "string", "minLength": 1 },
+          "image": { "type": "string", "minLength": 1 },
+          "alt": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "defaultOgImage": {
+      "type": "object",
+      "required": ["image", "alt"],
+      "properties": {
+        "image": { "type": "string", "minLength": 1 },
+        "alt": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "examplesProject": { "type": "string", "pattern": "\\.fsproj$" },
+    "packages": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "prefixItems": [{ "type": "string", "minLength": 1 }, { "type": "string", "minLength": 1 }],
+        "minItems": 2,
+        "maxItems": 2
+      }
+    },
+    "browserBundles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "route"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "route": { "type": "string", "minLength": 1 },
+          "build": {
+            "type": "object",
+            "properties": {
+              "kind": { "enum": ["npm", "fickl-vite"] },
+              "script": { "type": "string", "minLength": 1 },
+              "serverProject": { "type": "string", "minLength": 1 },
+              "clientProject": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
   },
   "additionalProperties": false
 }

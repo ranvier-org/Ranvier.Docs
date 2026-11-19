@@ -46,23 +46,19 @@ NuGet references and local source roots are separate from npm runtime packages. 
 
 Keep exact versions for the central host's own packages and tools. Avoid a developer-only package feed as an undocumented prerequisite. Any locally built prerelease required for development must be replaced by an acquired source project or a published pinned package before claiming clean-machine CI readiness.
 
-## Triggering rebuilds
+## Triggering rebuilds & downstream PR validation
 
-Pushes and pull requests in the central host run its workflow. Library changes are not automatically visible until the host updates its lock. This is deliberate: a changing branch must not silently change an allegedly reproducible build.
+Pushes and pull requests in the central host run its workflow. Merging to `main` automatically verifies and deploys the shared site to GitHub Pages, while manual `workflow_dispatch` runs (`dotnet fsi build.fsx -- publish`) remain available on demand.
 
-For later organisation integration, add a dependency-update process that refreshes selected source revisions and submits a host update for validation, or an explicitly configured repository dispatch workflow. Such automation is a migration/operations choice; merely registering a source does not install a cross-repository token or workflow in that library.
+The scheduled and dispatchable `sync-sources.yml` workflow (`repository_dispatch` type `docs-updated`, 6-hourly cron, or manual dispatch) refreshes `sources.lock.json`, runs the full `verify` gate, and opens an auto-merging pull request whenever upstream documentation revisions advance.
 
-## Build versus deployment
+Downstream library repositories can validate their `docs/ranvier-docs.json` manifest, menu coverage, `.fsx` front matter, directives and intra-repository links directly in their own pull requests using `scripts/validate-repo.mjs` or the reusable workflow:
 
-The workflow's manual `deploy` input defaults to false. Ordinary pushes and pull requests produce artifacts. A manual workflow dispatch with `deploy=true` builds and validates first, then uploads a Pages artifact and runs the deployment job.
-
-Trigger that GitHub deployment through Partas.Build:
-
-```sh
-dotnet fsi build.fsx -- publish
+```yaml
+jobs:
+  docs-check:
+    uses: ranvier-org/Ranvier.Docs/.github/workflows/validate-source.yml@main
 ```
-
-This requests the repository's GitHub deployment workflow. A local `docs` build does not publish the site.
 
 Before enabling publication, configure the repository's GitHub Pages source as GitHub Actions and its `github-pages` environment. Set `baseUrl` for the actual destination. A project site normally needs `/<repository-name>/`; a custom-domain root may use `/`. `origin` is the scheme/hostname without the path prefix.
 

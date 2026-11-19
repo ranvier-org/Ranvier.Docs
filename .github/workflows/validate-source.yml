@@ -1,0 +1,49 @@
+name: Validate repository documentation manifest
+on:
+  workflow_call:
+    inputs:
+      id:
+        description: Source id in Ranvier.Docs (defaults to slugified repository name)
+        required: false
+        type: string
+      content:
+        description: Content directory override if no docs/ranvier-docs.json exists
+        required: false
+        type: string
+      manifest:
+        description: Path to ranvier-docs.json manifest
+        required: false
+        type: string
+        default: docs/ranvier-docs.json
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out caller repository
+        uses: actions/checkout@v7
+        with:
+          path: target-repo
+      - name: Check out Ranvier.Docs validator
+        uses: actions/checkout@v7
+        with:
+          repository: ranvier-org/Ranvier.Docs
+          path: ranvier-docs
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: ranvier-docs/package-lock.json
+      - name: Install validator dependencies
+        working-directory: ranvier-docs
+        run: npm ci --no-audit --no-fund
+      - name: Validate repository documentation
+        env:
+          INPUT_ID: ${{ inputs.id }}
+          INPUT_CONTENT: ${{ inputs.content }}
+          INPUT_MANIFEST: ${{ inputs.manifest }}
+        run: |
+          args=(--repo target-repo --manifest "$INPUT_MANIFEST")
+          if [ -n "$INPUT_ID" ]; then args+=(--id "$INPUT_ID"); fi
+          if [ -n "$INPUT_CONTENT" ]; then args+=(--content "$INPUT_CONTENT"); fi
+          node ranvier-docs/scripts/validate-repo.mjs "${args[@]}"

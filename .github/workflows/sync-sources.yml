@@ -1,0 +1,65 @@
+name: Sync upstream documentation sources
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  repository_dispatch:
+    types: [docs-updated]
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: Source ids to refresh (all, or comma-separated ids)
+        type: string
+        default: all
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-sources-lock
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          cache: npm
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: Refresh source lock
+        env:
+          REFRESH_TARGET: ${{ inputs.sources || 'all' }}
+        run: dotnet fsi --exec build.fsx -- sources --refresh "$REFRESH_TARGET"
+      - name: Check for lock updates
+        id: diff
+        run: |
+          if git diff --quiet sources.lock.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Verify updated documentation cohort
+        if: steps.diff.outputs.changed == 'true'
+        run: dotnet fsi --exec build.fsx -- verify --report .artifacts/verification.json
+      - name: Open or update lock refresh pull request
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          branch="chore/sync-sources-lock"
+          git checkout -B "$branch"
+          git add sources.lock.json
+          git commit -m "chore: refresh locked documentation source revisions"
+          git push --force-with-lease origin "$branch"
+          existing="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
+          if [ -z "$existing" ]; then
+            pr_url="$(gh pr create --base main --head "$branch" --title "chore: refresh locked documentation source revisions" --body "Automated refresh of \`sources.lock.json\` verified against \`dotnet fsi build.fsx -- verify\`.")"
+            gh pr merge --auto --squash "$pr_url" || true
+          fi

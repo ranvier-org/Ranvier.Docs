@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -13,7 +13,10 @@ export async function writeBuildInputs(metadata, destination = root) {
     return `<${property}>${xml(source.root)}</${property}>`;
   });
   await writeFile(path.join(destination, '.generated/DependencyRoots.props'), `<Project><PropertyGroup>${properties.join('')}</PropertyGroup></Project>\n`);
-  const projects = [path.join(destination, 'src/Ranvier.Docs.Examples/Ranvier.Docs.Examples.fsproj'), ...metadata.sources.flatMap(source => source.examplesProject ? [source.examplesProject] : [])];
+  const projects = [
+    path.join(destination, 'src/Ranvier.Docs.Examples/Ranvier.Docs.Examples.fsproj'),
+    ...metadata.sources.flatMap(source => source.examplesProject ? [source.examplesProject] : [])
+  ];
   const packages = new Map([['animejs', '4.5.0']]);
   for (const source of metadata.sources) for (const [name, version] of source.packages ?? []) {
     if (packages.has(name) && packages.get(name) !== version) throw new Error(`Conflicting versions for example package '${name}'.`);
@@ -21,10 +24,31 @@ export async function writeBuildInputs(metadata, destination = root) {
   }
   const project = `<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies><RanvierTrace>true</RanvierTrace></PropertyGroup><ItemGroup>${[...new Set(projects)].map(project => `<ProjectReference Include="${xml(path.resolve(destination, project))}" />`).join('')}</ItemGroup></Project>\n`;
   await writeFile(path.join(destination, '.generated/Examples.fsproj'), project);
-  const assemblies = ['Fable.Core', 'Xantham.Fable.Core', 'Xantham.Fable.Core.TS', 'Ranvier', 'Ranvier.Dom', 'Ranvier.View', 'Ranvier.View.Dom', 'Fable.Ranvier.Anime', 'Fable.Ranvier.View.Anime', 'Ranvier.Css', 'Ranvier.Css.Bindings', 'Ranvier.Css.View', 'Ranvier.Docs.MapModel', 'Ranvier.Docs.Maps', 'Ranvier.Docs.Examples'];
-  const helper = assemblies.map(name => `#r @"${path.join(destination, '.generated/bin/Release/net10.0', `${name}.dll`).replaceAll('"', '""')}"`).join('\n') + '\n';
+  const apiProjects = [...new Set(metadata.sources.flatMap(source => source.apiReference?.projects ?? []))];
+  const apiProjectDir = path.join(destination, '.generated/api-reference');
+  const apiProjectPath = path.join(apiProjectDir, 'ApiReference.fsproj');
+  if (apiProjects.length > 0) {
+    await mkdir(apiProjectDir, { recursive: true });
+    const apiProject = `<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies><RanvierTrace>true</RanvierTrace></PropertyGroup><ItemGroup>${apiProjects.map(project => `<ProjectReference Include="${xml(path.resolve(destination, project))}" />`).join('')}</ItemGroup></Project>\n`;
+    await writeFile(apiProjectPath, apiProject);
+  } else {
+    await rm(apiProjectDir, { recursive: true, force: true });
+  }
+  const baseAssemblies = [
+    'Fable.Core', 'Xantham.Fable.Core', 'Xantham.Fable.Core.TS',
+    'Ranvier', 'Ranvier.Dom', 'Ranvier.View', 'Ranvier.View.Dom',
+    'Fable.Ranvier.Anime', 'Fable.Ranvier.View.Anime',
+    'Ranvier.Css', 'Ranvier.Css.Bindings', 'Ranvier.Css.View',
+    'Ranvier.Docs.MapModel', 'Ranvier.Docs.Maps', 'Ranvier.Docs.Examples'
+  ];
+  const baseSet = new Set(baseAssemblies);
+  const extraAssemblies = [...new Set(metadata.sources.flatMap(source => source.apiReference?.assemblies ?? []))].filter(name => !baseSet.has(name));
+  const helperLines = [
+    ...baseAssemblies.map(name => `#r @"${path.join(destination, '.generated/bin/Release/net10.0', `${name}.dll`).replaceAll('"', '""')}"`),
+    ...extraAssemblies.map(name => `#r @"${path.join(destination, '.generated/api-reference/bin/Release/net10.0', `${name}.dll`).replaceAll('"', '""')}"`)
+  ];
   await mkdir(path.join(destination, '.generated/content'), { recursive: true });
-  await writeFile(path.join(destination, '.generated/content/literate.fsx'), helper);
+  await writeFile(path.join(destination, '.generated/content/literate.fsx'), helperLines.join('\n') + '\n');
   return metadata;
 }
 
@@ -34,8 +58,9 @@ export function watchFolders(metadata, workspace = root) {
   for (const folder of metadata.performanceWatchRoots ?? []) folders.add(folder);
   for (const source of metadata.sources) {
     for (const folder of source.watchRoots ?? [path.join(source.root, 'docs'), path.resolve(source.root, source.originalContent ?? 'docs/content')]) folders.add(folder);
-    if (['core', 'view', 'anime', 'css'].includes(source.id)) folders.add(path.join(source.root, 'src'));
+    if (['core', 'view', 'anime', 'css'].includes(source.id) || (source.apiReference?.projects?.length ?? 0) > 0) {
+      folders.add(path.join(source.root, 'src'));
+    }
   }
   return [...folders];
 }
-

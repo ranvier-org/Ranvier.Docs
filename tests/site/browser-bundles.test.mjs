@@ -94,3 +94,37 @@ test('browser completion refuses to cache a build whose inputs changed after pla
   await assert.rejects(completeBrowserBundles(plan, { run: f.options.run }), /inputs changed/);
   await assert.rejects(readFile(plan[0].marker), /ENOENT/);
 });
+
+test('non-View repositories can opt into built browserBundles with explicit build configuration', async t => {
+  const f = await fixture(t);
+  const terminalRoot = path.join(f.root, 'inputs/terminal');
+  const demoRoot = path.join(terminalRoot, 'examples/Demo');
+  await mkdir(path.join(terminalRoot, 'src'), { recursive: true });
+  await mkdir(path.join(terminalRoot, 'docs'), { recursive: true });
+  await mkdir(demoRoot, { recursive: true });
+  await writeFile(path.join(terminalRoot, 'src/Terminal.fs'), 'module Terminal');
+  await writeFile(path.join(terminalRoot, 'docs/ranvier-docs.json'), JSON.stringify({
+    version: 1,
+    browserBundles: [
+      { path: 'examples/Demo/dist', route: 'examples/demo', build: { kind: 'npm', script: 'bundle' } },
+      { path: 'prebuilt/dist', route: 'examples/prebuilt' }
+    ]
+  }));
+  f.sources.push({ id: 'terminal', repository: 'fixture/terminal', local: terminalRoot });
+  await writeFile(path.join(f.root, 'sources.json'), JSON.stringify({ version: 1, sources: f.sources }));
+  const customRun = async (command, args, options) => {
+    f.calls.push({ command, args, ...options });
+    if (command === 'git') return options.cwd === terminalRoot ? 'src/Terminal.fs\0' : 'src/Library.fs\0';
+    if (args[0] === 'run') {
+      await mkdir(path.join(options.cwd, 'dist'), { recursive: true });
+      await writeFile(path.join(options.cwd, 'dist/index.html'), '<!doctype html><h1>Built</h1>');
+    }
+    return '';
+  };
+  const built = await prepareBrowserBundles({ ...f.options, run: customRun });
+  assert.equal(built.length, 2);
+  const terminalBundle = built.find(item => item.sourceId === 'terminal');
+  assert.ok(terminalBundle);
+  assert.equal(terminalBundle.route, 'examples/demo');
+  assert.equal(f.calls.some(call => call.cwd === demoRoot && call.args[0] === 'run' && call.args[1] === 'bundle'), true);
+});

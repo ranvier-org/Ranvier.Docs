@@ -11,9 +11,12 @@
 
     <ItemGroup>
         <Compile Include="../../src/Ranvier.Docs.Site/Directives.fs" Link="CompatibilityDirectives.fs" />
+        <Compile Include="../../src/Ranvier.Docs.Site/BrandTheme.fs" Link="BrandTheme.fs" />
+        <Compile Include="../../src/Ranvier.Docs.Site/SiteModel.fs" Link="SiteModel.fs" />
         <Compile Include="Tests.fs"/>
         <Compile Include="../Styles.Tests.fs" Link="Styles.Tests.fs"/>
         <Compile Include="CenterTests.fs" />
+        <Compile Include="AuthoringAndMenuTests.fs" />
         <Compile Include="Main.fs"/>
         <None Include="../fixtures/default-theme.css" Link="Fixtures/default-theme.css" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
