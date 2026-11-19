@@ -172,6 +172,11 @@ let private configure root (metadata: JsonElement) =
         |> Collection.routePrefix route
         |> Collection.title _.Title
         |> Collection.order (fun frontMatter -> defaultArg frontMatter.Order 0)
+        |> Collection.toc (fun frontMatter ->
+            match frontMatter.Toc with
+            | Some(TocLevels range) -> Some range
+            | Some TocOff
+            | None -> None)
         |> Collection.layout (fun context ->
             let sourcePath =
                 context.Page.SourceFile
@@ -181,11 +186,15 @@ let private configure root (metadata: JsonElement) =
                         Path.GetRelativePath(stringValue "contentRoot" source, file).Replace('\\', '/')
                         |> RelativePath.create
                 )
-            Theme.layout
+            let updatedPage = { displayTitle context.Page with ProjectPath = sourcePath }
+            let doc = resolveCollectionDocPage context.FrontMatter updatedPage.Title context.Content
+            Theme.shell
                 sourceTheme
+                doc
                 { context with
-                    Page = { displayTitle context.Page with ProjectPath = sourcePath }
-                    Pages = List.map displayTitle context.Pages })
+                    Page = updatedPage
+                    Pages = List.map displayTitle context.Pages }
+            |> Markup.toLayout)
 
     let landing = Path.Combine(root, ".generated", "landing")
     Directory.CreateDirectory landing |> ignore

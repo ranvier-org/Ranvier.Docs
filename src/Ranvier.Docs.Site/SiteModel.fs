@@ -4,8 +4,12 @@ module internal Ranvier.Docs.SiteModel
 open System
 open System.IO
 open System.Text.Json
+open System.Text.RegularExpressions
 open Nacara.Core
 open Nacara.Plugins.Ranvier.Theme
+
+let private leadingH1Pattern =
+    Regex("^(?:\\s*<!--[\\s\\S]*?-->)*\\s*<h1[\\s>]", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
 
 let stringValue (name: string) (element: JsonElement) =
     match element.TryGetProperty name with
@@ -122,6 +126,21 @@ let explicitDisplayTitle (sources: JsonElement list) (page: Page) : Page =
                 tryFindExplicitTitle relative items)
             |> Option.map (fun title -> { page with Title = title })))
     |> Option.defaultValue page
+
+let resolveCollectionDocPage (frontMatter: DocFrontMatter) (resolvedTitle: string) (renderedHtml: string) : DocPage =
+    let normalizedFrontMatter, hideOverviewToc =
+        match frontMatter.Layout with
+        | Some "bare" -> { frontMatter with Title = resolvedTitle; Layout = None }, true
+        | _ -> { frontMatter with Title = resolvedTitle }, false
+
+    let baseDoc =
+        DocFrontMatter.toDocPage normalizedFrontMatter
+        |> fun doc -> if hideOverviewToc then DocPage.withoutToc doc else doc
+
+    if baseDoc.ShowTitle && not (String.IsNullOrEmpty renderedHtml) && leadingH1Pattern.IsMatch renderedHtml then
+        { baseDoc with ShowTitle = false }
+    else
+        baseDoc
 
 let buildNavbar (hasApiReference: bool) (sources: JsonElement list) : NavbarItem list =
     let hasCategories = sources |> List.exists (fun s -> not (String.IsNullOrEmpty(stringValue "category" s)))

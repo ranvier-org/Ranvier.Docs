@@ -274,6 +274,15 @@ body { line-height: 1.7; }
   border-left-color: var(--nacara-primary);
 }
 
+.nacara-layout:not(.nacara-layout--bare) {
+  padding: 2.5rem clamp(1.25rem, 3vw, 2.5rem);
+}
+@media (max-width: 860px) {
+  .nacara-layout:not(.nacara-layout--bare) {
+    padding: 1.5rem 1rem;
+  }
+}
+
 .nacara-content h1 {
   font-size: clamp(2rem, 1.6rem + 1.6vw, 2.5rem);
   font-weight: 650;
@@ -299,7 +308,8 @@ body { line-height: 1.7; }
   border-top: 1px solid var(--nacara-border);
   background: linear-gradient(var(--rv-contour), var(--rv-contour)) left -1px / 2.5rem 2px no-repeat;
 }
-.nacara-content > div > h2:first-child {
+.nacara-content > div > h2:first-child,
+.nacara-content > div > h1:first-child + h2 {
   border-top: 0;
   padding-top: 0;
   background: none;
@@ -314,7 +324,8 @@ body { line-height: 1.7; }
 .nacara-content h4 { font-size: 1rem; font-weight: 600; }
 .nacara-content .nacara-heading-anchor { color: var(--nacara-text-muted); }
 .nacara-content .nacara-heading-anchor:hover { color: var(--nacara-primary); }
-.nacara-content > h1 + div > p:first-child {
+.nacara-content > h1 + div > p:first-child,
+.nacara-content > div > h1:first-child + p {
   font-size: 1.125rem;
   line-height: 1.65;
   color: var(--nacara-text-muted);

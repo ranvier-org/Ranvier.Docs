@@ -197,9 +197,22 @@ test('the shared splash landing page, categorized navbar, hierarchical menus, AP
   expect(termResponse.status()).toBe(200);
   await expect(page.locator('.terminal-hero')).toBeVisible();
 
-  for (const route of ['barewire/', 'wgpu/', 'd5/', 'examples/walkthrough/', 'fsharp/', 'rocq/']) {
+  for (const route of ['keyboard/', 'persistence/', 'view/', 'css/', 'anime/']) {
     const res = await page.goto(route);
     expect(res.status(), `expected ${route} to return 200`).toBe(200);
+    await expect(page.locator('.nacara-layout')).not.toHaveClass(/nacara-layout--bare/);
+    await expect(page.locator('main#nacara-content')).toHaveClass(/nacara-content/);
+    await expect(page.locator('.nacara-sidebar')).toBeVisible();
+    await expect(page.locator('main h1')).toHaveCount(1);
+    const mainBox = await page.locator('main#nacara-content').boundingBox();
+    expect(mainBox.x, `expected ${route} main content to be padded/offset by sidebar`).toBeGreaterThan(200);
+  }
+
+  for (const route of ['barewire/', 'webcore/', 'wgpu/', 'd5/', 'examples/walkthrough/', 'fsharp/', 'rocq/', 'docs/']) {
+    const res = await page.goto(route);
+    expect(res.status(), `expected ${route} to return 200`).toBe(200);
+    await expect(page.locator('main#nacara-content')).toHaveClass(/nacara-content/);
+    await expect(page.locator('main h1')).toHaveCount(1);
   }
 
   const llms = await request.get(new URL('llms.txt', baseURL).href);
