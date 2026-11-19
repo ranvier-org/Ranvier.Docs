@@ -54,7 +54,7 @@
     "d5": {
       "repository": "ranvier-org/Ranvier.D5",
       "ref": "main",
-      "revision": "6429374a03e3f19dbaa5a165af317674b433d412"
+      "revision": "c6e89232a74f115694f07da2c67ffb5696616e5d"
     },
     "examples": {
       "repository": "ranvier-org/Ranvier.Examples",
