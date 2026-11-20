@@ -7,6 +7,7 @@
     <Compile Include="Directives.fs" />
     <Compile Include="BrandTheme.fs" />
     <Compile Include="SiteModel.fs" />
+    <Compile Include="Fickl.fs" />
     <Compile Include="Site.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -28,7 +29,7 @@
     <PackageReference Include="Nacara.Plugin.Assets.LightningCss" Version="1.0.0-beta.1" />
     <PackageReference Include="Nacara.Plugin.Assets.Esbuild" Version="1.0.0-beta.1" />
     <PackageReference Include="Nacara.Plugin.Assets.Nuglify" Version="1.0.0-beta.1" />
-    <PackageReference Include="Nacara.Plugin.LiveExample" Version="1.0.0-beta.9" />
+    <PackageReference Include="Nacara.Plugin.LiveExample" Version="1.0.0-local.609c818" />
     <PackageReference Include="Xantham.Fable.Core.TS" Version="0.2.1" />
     <PackageReference Include="Xantham.Fable.Core" Version="0.2.0" />
   </ItemGroup>

@@ -24,7 +24,7 @@
     "css": {
       "repository": "ranvier-org/Ranvier.Css",
       "ref": "main",
-      "revision": "6ae2a3b2ccd93e988f8eb1ab41abbdd49db14e14"
+      "revision": "3efb9ba69dddb6d8451fcf03d395452716f81c38"
     },
     "anime": {
       "repository": "ranvier-org/Ranvier.Anime",

@@ -322,7 +322,10 @@ let private configure root (metadata: JsonElement) =
         |> Site.plugin contentAssets
         |> Search.register
         |> LiveExample.registerWith (
-            LiveExample.preset (
+            LiveExample.fable (Hosted("fickl", Fickl.version, Fickl.standaloneUrl, Fickl.metadataUrl))
+            >> LiveExample.fableCommand "dotnet" [ "fickl" ]
+            >> LiveExample.requirePrecompile true
+            >> LiveExample.preset (
                 LiveExamplePreset.create "shared"
                 |> LiveExamplePreset.project examplesProject
                 |> LiveExamplePreset.css livePreviewCssPath
