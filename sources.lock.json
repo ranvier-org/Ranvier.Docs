@@ -4,7 +4,7 @@
     "core": {
       "repository": "ranvier-org/Ranvier",
       "ref": "master",
-      "revision": "c04a241bd8063faaac06fabe96669137c0ae1059"
+      "revision": "91f19756cc4147518cb45f0c721484725d7659bc"
     },
     "persistence": {
       "repository": "ranvier-org/Ranvier.Persistence",
@@ -24,7 +24,7 @@
     "css": {
       "repository": "ranvier-org/Ranvier.Css",
       "ref": "main",
-      "revision": "3efb9ba69dddb6d8451fcf03d395452716f81c38"
+      "revision": "ed7c164796df5ff6f33131122d70d2053480eb62"
     },
     "anime": {
       "repository": "ranvier-org/Ranvier.Anime",
@@ -39,7 +39,7 @@
     "webcore": {
       "repository": "ranvier-org/Ranvier.WebCore",
       "ref": "main",
-      "revision": "cf1c3770f64c3fd18d498982e6a0d4e459ec8cfa"
+      "revision": "10dc0381fd301680a74259cb7e37bfbf0fdcfa0b"
     },
     "terminal": {
       "repository": "ranvier-org/Ranvier.Terminal",
@@ -49,12 +49,12 @@
     "wgpu": {
       "repository": "ranvier-org/Ranvier.Wgpu",
       "ref": "main",
-      "revision": "9983185b1a72b78c5c1b1f6759ec9725d0f53f48"
+      "revision": "baecdbb8e17873377bf84d7951a5b28293dd789a"
     },
     "d5": {
       "repository": "ranvier-org/Ranvier.D5",
       "ref": "main",
-      "revision": "c6e89232a74f115694f07da2c67ffb5696616e5d"
+      "revision": "3a5659dfc5bbf83d878a20c71f4ef2942e6e64ff"
     },
     "examples": {
       "repository": "ranvier-org/Ranvier.Examples",
@@ -74,7 +74,7 @@
     "core-performance": {
       "repository": "ranvier-org/Ranvier",
       "ref": "perf-data",
-      "revision": "36cd044ab0c8a12aa5990ecc899a981743ff1cb9"
+      "revision": "a3aac6539dba6b6fa5eff52d5fadd03341f71bab"
     }
   }
 }
