@@ -4,12 +4,12 @@
     "core": {
       "repository": "ranvier-org/Ranvier",
       "ref": "master",
-      "revision": "f56b764cc08f305f9ebc9cf6e75f1485a60f9ea5"
+      "revision": "b8ee210dad43fcc2807f080a6e2523842d201359"
     },
     "persistence": {
       "repository": "ranvier-org/Ranvier.Persistence",
       "ref": "main",
-      "revision": "9a2f53c590ebe6e6b1e25a0dfa58e392fa5a963c"
+      "revision": "77dc5f1b353044dc6210a7a803a35580bf0de436"
     },
     "barewire": {
       "repository": "ranvier-org/Ranvier.BAREWire",
@@ -19,22 +19,22 @@
     "view": {
       "repository": "ranvier-org/Ranvier.View",
       "ref": "main",
-      "revision": "6bb719c1bf855d9b05391bfd20bdbffe8f18787f"
+      "revision": "de6795d6f9f695fbd99a6c5b32e265f45e2fa26c"
     },
     "css": {
       "repository": "ranvier-org/Ranvier.Css",
       "ref": "main",
-      "revision": "0b7f450349236d7480887cd0b5352b7a7014122f"
+      "revision": "c2fb26ed1511254ed19d1949c1934119179556d0"
     },
     "anime": {
       "repository": "ranvier-org/Ranvier.Anime",
       "ref": "main",
-      "revision": "110b869128eb5a6b29fdcda908e1690443865ba3"
+      "revision": "d88ed059eb09b2451673aafb5a5c9c3653b312f7"
     },
     "keyboard": {
       "repository": "ranvier-org/Ranvier.Keyboard",
       "ref": "main",
-      "revision": "ca65e63602dd3f24b6352d800a54587b3a5a57fd"
+      "revision": "1931bbfab57ec764da89fd992c66e2eeced10a51"
     },
     "webcore": {
       "repository": "ranvier-org/Ranvier.WebCore",
@@ -64,7 +64,7 @@
     "fsharp": {
       "repository": "ranvier-org/ranvier-fsharp",
       "ref": "main",
-      "revision": "0877df74f332a2c81eb1f5ddcf7012a8f000dd9b"
+      "revision": "e08da77238aa54a629075ebcea23d20b371133ae"
     },
     "rocq": {
       "repository": "ranvier-org/FSharp.Data.Rocq",
@@ -74,7 +74,7 @@
     "core-performance": {
       "repository": "ranvier-org/Ranvier",
       "ref": "perf-data",
-      "revision": "8858d1182ca3c7df4e109a465f32d319ebb79b75"
+      "revision": "c6ac83ac950d740379c98afc18b442ae8871e2d0"
     }
   }
 }
