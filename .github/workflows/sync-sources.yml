@@ -57,7 +57,11 @@ jobs:
           git checkout -B "$branch"
           git add sources.lock.json
           git commit -m "chore: refresh locked documentation source revisions"
-          git push --force-with-lease origin "$branch"
+          # checkout fetches only main, so a bare --force-with-lease finds no remote-tracking ref for
+          # this branch and expects it to be absent. Lease against its current tip instead; an empty
+          # tip (first run) still means the branch must not exist.
+          tip="$(git ls-remote --heads origin "refs/heads/$branch" | cut -f1)"
+          git push --force-with-lease="refs/heads/$branch:$tip" origin "$branch"
           existing="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
           if [ -z "$existing" ]; then
             pr_url="$(gh pr create --base main --head "$branch" --title "chore: refresh locked documentation source revisions" --body "Automated refresh of \`sources.lock.json\` verified against \`dotnet fsi build.fsx -- verify\`.")"
